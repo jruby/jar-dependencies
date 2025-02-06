@@ -2,7 +2,7 @@
 
 require File.expand_path('setup', File.dirname(__FILE__))
 
-require 'jar_installer'
+require 'jars/installer'
 
 # rubocop:disable Layout/LineLength
 describe Jars::Installer::Dependency do

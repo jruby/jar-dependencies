@@ -40,6 +40,10 @@ module Jars
         setup_type(line)
 
         line.strip!
+
+        # strip off trailing module output (jruby/jar-dependencies#92)
+        line.sub!(/\u001B.*$/, EMPTY)
+
         @coord = line.sub(/:[^:]+:([A-Z]:\\)?[^:]+$/, EMPTY)
         first, second = @coord.split(/:#{type}:/)
         group_id, artifact_id = first.split(':')
