@@ -89,5 +89,27 @@ describe Jars::Installer::Dependency do
     _(dep.path).must_equal 'org/sonatype/sisu/sisu-guice/3.1.0/sisu-guice-3.1.0-no_aop.jar'
     _(dep.file).must_equal 'C:\\Users\\Local\\repository\\org\\sonatype\\sisu\\sisu-guice\\3.1.0\\sisu-guice-3.1.0-no_aop.jar'
   end
+
+  # these next two combine every possible oddity to try to cover all combinations (classifier, windows path, ANSI and module)
+
+  it 'should parse dependency with module section' do
+    dep = Jars::Installer::Dependency.new(+'   org.eclipse.sisu:org.eclipse.sisu.plexus:jar:no_aop:0.0.0.M2a:compile:C:\\Users\\Local\\repository\\org\\sonatype\\sisu\\org.eclipse.sisu.plexus\\0.0.0.M2a\\org.eclipse.sisu.plexus-0.0.0.M2a-no_aop.jar -- module org.sonatype.sisu.sisu-guice')
+    _(dep.type).must_equal :jar
+    _(dep.scope).must_equal :runtime
+    _(dep.gav).must_equal 'org.eclipse.sisu:org.eclipse.sisu.plexus:no_aop:0.0.0.M2a'
+    _(dep.coord).must_equal 'org.eclipse.sisu:org.eclipse.sisu.plexus:jar:no_aop:0.0.0.M2a'
+    _(dep.path).must_equal 'org/eclipse/sisu/org.eclipse.sisu.plexus/0.0.0.M2a/org.eclipse.sisu.plexus-0.0.0.M2a-no_aop.jar'
+    _(dep.file).must_equal 'C:\\Users\\Local\\repository\\org\\sonatype\\sisu\\org.eclipse.sisu.plexus\\0.0.0.M2a\\org.eclipse.sisu.plexus-0.0.0.M2a-no_aop.jar'
+  end
+
+  it 'should parse dependency with ANSI-colored module section' do
+    dep = Jars::Installer::Dependency.new(+"   org.eclipse.sisu:org.eclipse.sisu.plexus:jar:no_aop:0.0.0.M2a:compile:C:\\Users\\Local\\repository\\org\\sonatype\\sisu\\org.eclipse.sisu.plexus\\0.0.0.M2a\\org.eclipse.sisu.plexus-0.0.0.M2a-no_aop.jar\e[31m -- module org.sonatype.sisu.sisu-guice\e[m")
+    _(dep.type).must_equal :jar
+    _(dep.scope).must_equal :runtime
+    _(dep.gav).must_equal 'org.eclipse.sisu:org.eclipse.sisu.plexus:no_aop:0.0.0.M2a'
+    _(dep.coord).must_equal 'org.eclipse.sisu:org.eclipse.sisu.plexus:jar:no_aop:0.0.0.M2a'
+    _(dep.path).must_equal 'org/eclipse/sisu/org.eclipse.sisu.plexus/0.0.0.M2a/org.eclipse.sisu.plexus-0.0.0.M2a-no_aop.jar'
+    _(dep.file).must_equal 'C:\\Users\\Local\\repository\\org\\sonatype\\sisu\\org.eclipse.sisu.plexus\\0.0.0.M2a\\org.eclipse.sisu.plexus-0.0.0.M2a-no_aop.jar'
+  end
 end
 # rubocop:enable Layout/LineLength

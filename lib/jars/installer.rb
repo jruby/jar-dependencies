@@ -37,12 +37,13 @@ module Jars
       REG = /:jar:|:pom:|:test:|:compile:|:runtime:|:provided:|:system:/.freeze
       EMPTY = ''
       def initialize(line)
+        # remove ANSI escape sequences and module section (https://issues.apache.org/jira/browse/MDEP-974)
+        line = line.gsub(/\e\[\d*m/, '')
+        line = line.gsub(/ -- module.*/, '')
+
         setup_type(line)
 
         line.strip!
-
-        # strip off trailing module output (jruby/jar-dependencies#92)
-        line.sub!(/\u001B.*$/, EMPTY)
 
         @coord = line.sub(/:[^:]+:([A-Z]:\\)?[^:]+$/, EMPTY)
         first, second = @coord.split(/:#{type}:/)
