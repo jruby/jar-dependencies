@@ -40,7 +40,7 @@ from the jar-dependencies plugin.
 
 ## gem with jar dependencies
 
-see the project here: [gem with jar dependencies](https://github.com/mkristian/jar-dependencies/tree/master/examples/gem-with-jar-dependencies)
+see the project here: [gem with jar dependencies](https://github.com/jruby/jar-dependencies/tree/master/examples/gem-with-jar-dependencies)
 
 you need to use bundler in this example. just declare the jar
 dependencies inside the gemspec, run
@@ -66,7 +66,7 @@ extension. note that there is no jar-dependencies gem involved here.
 ### using maven
 
 see project here:
-[gem with java extension using maven](https://github.com/mkristian/jar-dependencies/tree/master/examples/gem-with-java-extension/using-maven)
+[gem with java extension using maven](https://github.com/jruby/jar-dependencies/tree/master/examples/gem-with-java-extension/using-maven)
 
 you need maven 3.9.x installed to get it working and the project needs
 to prepare maven to use the ruby DSL for maven. this is done by adding
@@ -82,7 +82,7 @@ to setup your project.
 ### using ruby-maven
 
 see project here:
-[gem with java extension using ruby-maven](https://github.com/mkristian/jar-dependencies/tree/master/examples/gem-with-java-extension/using-ruby-maven)
+[gem with java extension using ruby-maven](https://github.com/jruby/jar-dependencies/tree/master/examples/gem-with-java-extension/using-ruby-maven)
 
 use the ruby-maven gem instead of system installed maven. much more ruby
 like, no need to have anything installed on the system beside jruby, i.e.
@@ -97,7 +97,7 @@ to setup your project.
 ### using rake-compiler
 
 see project here:
-[gem with java extension using rake-compiler](https://github.com/mkristian/jar-dependencies/tree/master/examples/gem-with-java-extension/using-rake-compiler)
+[gem with java extension using rake-compiler](https://github.com/jruby/jar-dependencies/tree/master/examples/gem-with-java-extension/using-rake-compiler)
 
 just use the rake compiler inside the Rakefile, i.e.
 
@@ -117,7 +117,7 @@ examples uses the jar dependencies declaration from the gemspec file.
 ### using maven
 
 see project here:
-[gem with java extension and jar dependencies using maven](https://github.com/mkristian/jar-dependencies/tree/master/examples/gem-with-java-extension-and-jar-dependencies/using-maven)
+[gem with java extension and jar dependencies using maven](https://github.com/jruby/jar-dependencies/tree/master/examples/gem-with-java-extension-and-jar-dependencies/using-maven)
 
 maven just sets up the compile classpath for building the extension jar
 
@@ -132,7 +132,7 @@ mvn prepare-package
 ### using ruby-maven
 
 see project here:
-[gem with java extension and jar dependencies using ruby-maven](https://github.com/mkristian/jar-dependencies/tree/master/examples/gem-with-java-extension-and-jar-dependencies/using-ruby-maven)
+[gem with java extension and jar dependencies using ruby-maven](https://github.com/jruby/jar-dependencies/tree/master/examples/gem-with-java-extension-and-jar-dependencies/using-ruby-maven)
 
 like maven but using ruby-maven instrad.
 
@@ -147,7 +147,7 @@ rake compile
 ### using rake-compiler
 
 see project here:
-[gem with java extension and jar dependencies using rake-compiler](https://github.com/mkristian/jar-dependencies/tree/master/examples/gem-with-java-extension-and-jar-dependencies/using-rake-compiler)
+[gem with java extension and jar dependencies using rake-compiler](https://github.com/jruby/jar-dependencies/tree/master/examples/gem-with-java-extension-and-jar-dependencies/using-rake-compiler)
 
 jar-dependencies gems offers a simple way to pass on the classpath to rake-compiler.
 

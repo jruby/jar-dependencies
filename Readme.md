@@ -1,15 +1,14 @@
 # jar-dependencies
 
-* [![Build Status](https://secure.travis-ci.org/mkristian/jar-dependencies.svg)](http://travis-ci.org/mkristian/jar-dependencies)
-* [![Code Climate](https://codeclimate.com/github/mkristian/jar-dependencies.svg)](https://codeclimate.com/github/mkristian/jar-dependencies)
+[![Gem Version](https://img.shields.io/gem/v/jar-dependencies)](https://rubygems.org/gems/jar-dependencies)
+[![Build Status](https://github.com/jruby/jar-dependencies/actions/workflows/main.yml/badge.svg)](https://github.com/jruby/jar-dependencies/actions/workflows/main.yml?query=branch%3Amaster)
 
-add gem dependencies for jar files to ruby gems.
-
+Add gem dependencies for jar files to ruby gems.
 
 ## Getting control back over your jar
 
 jar dependencies are declared in the gemspec of the gem using the same notation
-as <https://github.com/mkristian/jbundler>.
+as [JBundler](https://github.com/jruby/jbundler).
 
 When using `require_jar` to load the jar into JRuby's classloader a version conflict
 will be detected and only **ONE** jar gets loaded.
@@ -23,10 +22,12 @@ In such cases **jbundler** can always **overwrite** any such version.
 
 Add the following to your *Rakefile*:
 
-    require 'jars/installer'
-    task :install_jars do
-      Jars::Installer.vendor_jars!
-    end
+```ruby
+require 'jars/installer'
+task :install_jars do
+  Jars::Installer.vendor_jars!
+end
+```
 
 This will install (download) the dependent jars into **JARS_HOME** and create a
 file **lib/my_gem_jars.rb**, which will be an enumeration of `require_jars`
@@ -62,7 +63,9 @@ gem so the require_jars file will be overwritten during installation with the
 
 Set the environment variable
 
-    export JARS_VENDOR=false
+```shell
+export JARS_VENDOR=false
+```
 
 to tell the jar_installer not vendor any jars, but only create the file with the
 `require_jar` statements. This `require_jars` method will find the jar inside the
@@ -102,7 +105,9 @@ the rake-compiler in conjunction with jar-dependencies.
 Whenever there are version ranges for jar dependencies it is advisable to lock down the versions of dependencies.
 For the jar dependencies inside the gemspec declaration this can be done with:
 
-    lock_jars
+```shell
+lock_jars
+```
 
 This is also working in **any** project which uses a gem with
 jar-dependencies. It also uses a Jarfile if present. See the [sinatra
@@ -110,20 +115,26 @@ application from the examples](examples/sinatra-app/having-jarfile-and-gems-with
 
 This means for a project using bundler and jar-dependencies the setup is
 
-     bundle install
-     lock_jars
+```shell
+bundle install
+lock_jars
+```
 
 This will install both gems and jars for the project.
 
 Update a specific version is done with (use only the artifact_id)
 
-    lock_jars --update slf4j-api
+```shell
+lock_jars --update slf4j-api
+```
 
 And look at the dependencies tree
 
-    lock_jars --tree
+```shell
+lock_jars --tree
+```
 
-As ```lock_jars``` uses ruby-maven to resolve the jar dependencies.
+As `lock_jars` uses ruby-maven to resolve the jar dependencies.
 Since jar-dependencies does not declare ruby-maven as runtime dependency
 (you just not need ruby-maven during runtime only when you want to
 setup the project it is needed) it is advicable to have it as
@@ -141,13 +152,7 @@ jar-dependencies itself uses maven **only** for the jars and all gems are manage
 
 # Gradle, Maven, etc
 
-For dependency management frameworks like gradle (via
-jruby-gradle-plugin) or maven (via jruby-maven-plugins
-or jruby9-maven-plugins) or probably ivy or sbt can use the gem
-artifacts from a maven repository like
-[rubygems-proxy from torquebox](http://rubygems-proxy.torquebox.org/)
-or
-[rubygems.lasagna.io/proxy/maven/releases](http://rubygems.lasagna.io/proxy/maven/releases/).
+Dependency management frameworks like gradle (via jruby-gradle-plugin) or maven (via jruby-maven-plugins) can also use gem artifacts retrieved from rubygems.org.
 
 Each of these tools (including jar-dependencies) does the dependency
 resolution slightly different and in rare cases can produce different
@@ -164,18 +169,23 @@ xalan/xerces libraries used by those gems are popular ones in the Java world.
 Since maven is used under the hood it is possible to get more insight
 what maven is doing. Show the regular maven output:
 
-    JARS_VERBOSE=true bundle install
-    JARS_VERBOSE=true gem install some_gem
+```shell
+JARS_VERBOSE=true bundle install
+JARS_VERBOSE=true gem install some_gem
+```
+
 
 Or, with maven debug enabled
 
-    JARS_DEBUG=true bundle install
-    JARS_DEBUG=true gem install some_gem
+```shell
+JARS_DEBUG=true bundle install
+JARS_DEBUG=true gem install some_gem
+```
 
 The maven command line which gets printed needs maven-3.9.x and the
 ruby DSL extension for maven:
-[https://github.com/takari/polyglot-maven#configuration](polyglot-maven
-configuration) where ```${maven.multiModuleProjectDirectory}``` is
+[polyglot-maven
+configuration](https://github.com/takari/polyglot-maven#configuration) where `${maven.multiModuleProjectDirectory}` is
 your current directory.
 
 # Configuration
@@ -206,15 +216,12 @@ your current directory.
 
 # Motivation
 
-Just today, I stumbled across [https://github.com/arrigonialberto86/ruby-band](https://github.com/arrigonialberto86/ruby-band) which uses jbundler to manage their JAR dependencies, which happens on the first 'require "ruby-band"'. There is no easy or formal way to find out which JARs are added to jruby-classloader.
+In 2014, while tools such as [https://github.com/arrigonialberto86/ruby-band](https://github.com/arrigonialberto86/ruby-band) used [jbundler](https://github.com/jruby/jbundler) to manage their there was no easy or formal way to 
+- find out which JARs were added to the JRuby classloader
+- to manage JRuby projects with Maven
+- to build Java/JRuby gem extensions with [rake-compiler](https://github.com/luislavena/rake-compiler/issues/87).
 
-Another issue was brought to my notice yesterday [https://github.com/hqmq/derelicte/issues/1](https://github.com/hqmq/derelicte/issues/1).
-
-Or the question of how to manage JRuby projects with maven [http://ruby.11.x6.nabble.com/Maven-dependency-management-td4996934.html](http://ruby.11.x6.nabble.com/Maven-dependency-management-td4996934.html)
-
-Or a few days ago an issue for rake-compile [https://github.com/luislavena/rake-compiler/issues/87](https://github.com/luislavena/rake-compiler/issues/87)
-
-With JRuby 9000 it is the right time to get jar dependencies "right" - the current situation is like the time before bundler for gems.
+With JRuby 9000 it was the right time to get jar dependencies "right".
 
 # Developing
 

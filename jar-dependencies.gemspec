@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.author = 'christian meier'
   s.email = ['mkristian@web.de']
   s.summary = 'manage jar dependencies for gems'
-  s.homepage = 'https://github.com/mkristian/jar-dependencies'
+  s.homepage = 'https://github.com/jruby/jar-dependencies'
 
   s.bindir = 'exe'
   s.executables = [lock_jars = 'lock_jars']
