@@ -30,7 +30,7 @@ Gem::Specification.new do |s|
   s.required_ruby_version = '>= 2.6'
 
   s.add_development_dependency 'minitest', '~> 5.10'
-  s.add_development_dependency 'ruby-maven', ruby_maven_version = '~> 3.9'
+  s.add_dependency 'ruby-maven', ruby_maven_version = '~> 3.9'
 
   s.post_install_message = <<~TEXT
 
