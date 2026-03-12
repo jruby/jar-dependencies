@@ -18,8 +18,6 @@ Performance/Casecmp:
 
 Style/Alias:
   EnforcedStyle: prefer_alias_method
-Style/BlockDelimiters:
-  IgnoredMethods: []
 Style/Documentation:
   Enabled: false
 Style/EnvHome:
