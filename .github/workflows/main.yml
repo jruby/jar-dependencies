@@ -13,10 +13,10 @@ jobs:
 
     strategy:
       matrix:
-        ruby-version: [jruby-9.3, jruby-9.4]
+        ruby-version: [jruby-9.3, jruby-9.4, jruby-10.0]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
