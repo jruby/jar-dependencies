@@ -44,7 +44,7 @@ describe Jars::Installer do
     File.read(jars).each_line do |line|
       _(line).must_match(/^\s{2}require(_jar)?\s'.+'$/) if line.size > 30 && !line.match(/^#/)
     end
-    _( Dir[File.join(dir, '**')].size ).must_equal 1
+    _(Dir[File.join(dir, '**')].size).must_equal 1
   end
 
   it 'generates vendored require-file' do
@@ -54,7 +54,7 @@ describe Jars::Installer do
     File.read(jars).each_line do |line|
       _(line).must_match(/^\s{2}require(_jar)?\s'.+'$/) if line.size > 30 && !line.match(/^#/)
     end
-    _( Dir[File.join(dir, '**', '*.jar')].size ).must_equal 45
+    _(Dir[File.join(dir, '**', '*.jar')].size).must_equal 45
   end
 
   it 'just skips install_jars and vendor_jars if there are no requirements' do

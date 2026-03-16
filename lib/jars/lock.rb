@@ -57,7 +57,7 @@ module Jars
       File.read(@file).each_line do |line|
         next unless /:.+:/.match?(line)
 
-        jar = JarDetails.new(line.strip.sub(/:jar:/, ':').sub(/:$/, ': ').split(':'))
+        jar = JarDetails.new(line.strip.sub(':jar:', ':').sub(/:$/, ': ').split(':'))
         case scope
         when :all, :test
           yield jar

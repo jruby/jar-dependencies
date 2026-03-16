@@ -165,7 +165,7 @@ describe Jars do
     begin
       $stderr = StringIO.new
 
-      -> { require_jar('org.slf4j', 'slf4j-simple', '1.6.6') }.must_raise RuntimeError
+      _ { require_jar('org.slf4j', 'slf4j-simple', '1.6.6') }.must_raise RuntimeError
 
       $stderr.flush
 
@@ -246,7 +246,6 @@ describe Jars do
     load File.expand_path('lib/jar_dependencies.rb')
 
     _($stderr.string).must_equal ''
-
   ensure
     $stderr = STDERR
   end
@@ -267,7 +266,6 @@ describe Jars do
     _($stderr.string).must_match(/omit version 2/)
     _($stderr.string).must_match(/omit version 3/)
     _($stderr.string).wont_match(/omit version 4/)
-
   ensure
     $stderr = STDERR
 

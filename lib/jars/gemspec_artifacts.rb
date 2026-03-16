@@ -12,7 +12,7 @@ module Jars
           if low == high
             low
           else
-            super "#{low || '[0'},#{high || ')'}"
+            super("#{low || '[0'},#{high || ')'}")
           end
         end
       end
@@ -26,17 +26,17 @@ module Jars
           ["[#{snapshot_version(val)}", "#{snapshot_version(last)}]"]
         elsif arg.include?('>=')
           val = arg.sub(/>=\s*/, '')
-          ["[#{snapshot_version(val)}", (nil || high)]
+          ["[#{snapshot_version(val)}", high]
         elsif arg.include?('<=')
           val = arg.sub(/<=\s*/, '')
-          [(nil || low), "#{snapshot_version(val)}]"]
+          [low, "#{snapshot_version(val)}]"]
         # treat '!' the same way as '>' since maven can not describe such range
         elsif /[!>]/.match?(arg)
           val = arg.sub(/[!>]\s*/, '')
-          ["(#{snapshot_version(val)}", (nil || high)]
+          ["(#{snapshot_version(val)}", high]
         elsif arg.include?('<')
           val = arg.sub(/<\s*/, '')
-          [(nil || low), "#{snapshot_version(val)})"]
+          [low, "#{snapshot_version(val)})"]
         elsif arg.include?('=')
           val = arg.sub(/=\s*/, '')
           # for prereleased version pick the maven version (no version range)
@@ -133,12 +133,12 @@ module Jars
 
         if /[\[()\]]/.match?(line)
           index = line.index(/[\[(].+$/)
-          version = line[index..].sub(/:/, ', ')
-          line = line[0..index - 1].strip.sub(/:$/, '')
+          version = line[index..].sub(':', ', ')
+          line = line[0..(index - 1)].strip.sub(/:$/, '')
         else
           index = line.index(/:[^:]+$/)
-          version = line[index + 1..]
-          line = line[0..index - 1].strip
+          version = line[(index + 1)..]
+          line = line[0..(index - 1)].strip
         end
 
         case line.count(':')

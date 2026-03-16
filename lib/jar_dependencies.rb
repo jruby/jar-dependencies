@@ -95,7 +95,7 @@ module Jars
       if @require.nil?
         if (require = to_boolean(REQUIRE)).nil?
           no_require = to_boolean(NO_REQUIRE)
-          @require = no_require.nil? ? true : !no_require
+          @require = no_require.nil? || !no_require
         else
           @require = require
         end
