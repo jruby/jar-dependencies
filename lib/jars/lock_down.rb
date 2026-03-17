@@ -97,9 +97,9 @@ module Jars
         puts "          exclusions: #{a.exclusions}" if a.exclusions && !a.exclusions.empty?
       end
 
-      context = Mima.create_context
+      context = Jars::Mima.create_context
       begin
-        resolved = Mima.resolve_with_context(context, artifacts, all_dependencies: true)
+        resolved = Jars::Mima.resolve_with_context(context, artifacts, all_dependencies: true)
       ensure
         context.close
       end
