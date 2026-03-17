@@ -1,31 +1,25 @@
-name: Ruby
+name: jar-dependencies
 
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+on: [push, pull_request]
 
 jobs:
   test:
-
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
-        ruby-version: [jruby-9.3, jruby-9.4, jruby-10.0]
+        ruby-version: [jruby-9.4, jruby-10.0, jruby-head]
 
     steps:
-      - uses: actions/checkout@v5
-      - name: Set up Ruby
+      - uses: actions/checkout@v6
+      - name: Set up JRuby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby-version }}
           bundler-cache: true
-      - name: Install dependencies
-        run: bundle install
-      - name: Run test
-        run: jruby -Ilib -rbundler/setup -S rake specs
+      - name: Run tests
+        run: rake specs
       - name: Run RuboCop
         if: matrix.ruby-version == 'jruby-10.0' # Only run RuboCop on modern JRuby; target older jrubies via .rubocop.yml
         run: jruby -Ilib -rbundler/setup -S rubocop lib specs
