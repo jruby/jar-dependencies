@@ -3,7 +3,6 @@
 require 'fileutils'
 require 'jar_dependencies'
 require 'jars/version'
-require 'jars/maven_factory'
 require 'jars/gemspec_artifacts'
 
 module Jars
@@ -15,38 +14,49 @@ module Jars
       @verbose = verbose
     end
 
-    def maven_new
-      factory = MavenFactory.new({}, @debug, @verbose)
-      pom = File.expand_path('lock_down_pom.rb', __dir__)
-      m = factory.maven_new(pom)
-      m['jruby.plugins.version'] = Jars::JRUBY_PLUGINS_VERSION
-      m['dependency.plugin.version'] = Jars::DEPENDENCY_PLUGIN_VERSION
-      m['jars.basedir'] = File.expand_path(basedir)
-      jarfile = File.expand_path(Jars.jarfile)
-      m['jars.jarfile'] = jarfile if File.exist?(jarfile)
-      attach_jar_coordinates_from_bundler_dependencies(m)
-      m
-    end
-    private :maven_new
-
-    def maven
-      @maven ||= maven_new
-    end
-
     def basedir
       File.expand_path('.')
     end
 
-    def attach_jar_coordinates_from_bundler_dependencies(maven)
+    def collect_artifacts
+      artifacts = []
+      done = []
+
+      attach_jar_coordinates_from_bundler_dependencies(artifacts, done)
+
+      # Also collect from local gemspec if present
+      specs = Dir['*.gemspec']
+      if specs.size == 1
+        spec = eval(File.read(specs.first), TOPLEVEL_BINDING, specs.first) # rubocop:disable Security/Eval
+        ga = GemspecArtifacts.new(spec)
+        ga.artifacts.each do |a|
+          unless done.include?(a.key)
+            artifacts << a
+            done << a.key
+          end
+        end
+      end
+
+      artifacts
+    end
+    private :collect_artifacts
+
+    def attach_jar_coordinates_from_bundler_dependencies(artifacts, done)
       load_path = $LOAD_PATH.dup
       require 'bundler'
       # TODO: make this group a commandline option
       Bundler.setup('default')
-      maven.property('jars.bundler', true)
       cwd = File.expand_path('.')
       Gem.loaded_specs.each_value do |spec|
-        # if gemspec is local then include all dependencies
-        maven.attach_jars(spec, all_dependencies: cwd == spec.full_gem_path)
+        all = cwd == spec.full_gem_path # if gemspec is local then include all dependencies
+        ga = GemspecArtifacts.new(spec)
+        ga.artifacts.each do |a|
+          next if done.include?(a.key)
+          next unless all || (a.scope != 'provided' && a.scope != 'test')
+
+          artifacts << a
+          done << a.key
+        end
       end
     rescue LoadError => e
       if Jars.verbose?
@@ -62,40 +72,73 @@ module Jars
       $LOAD_PATH.replace(load_path)
     end
 
-    def lock_down(vendor_dir = nil, force: false, update: false, tree: nil)
-      out = File.expand_path('.jars.output')
-      tree_provided = tree
-      tree ||= File.expand_path('.jars.tree')
-      maven.property('jars.outputFile', out)
-      maven.property('maven.repo.local', Jars.local_maven_repo)
-      maven.property('jars.home', File.expand_path(vendor_dir)) if vendor_dir
-      maven.property('jars.lock', File.expand_path(Jars.lock))
-      maven.property('jars.force', force)
-      maven.property('jars.update', update) if update
-      # tell not to use Jars.lock as part of POM when running mvn
-      maven.property('jars.skip.lock', true)
+    def lock_down(vendor_dir = nil, force: false, update: false, tree: nil) # rubocop:disable Lint/UnusedMethodArgument
+      require 'jars/mima'
 
-      args = ['gem:jars-lock']
-      args += ['dependency:tree', '-P -gemfile.lock', "-DoutputFile=#{tree}"] if tree_provided
+      lock_file = File.expand_path(Jars.lock)
+
+      if !force && File.exist?(lock_file)
+        puts 'Jars.lock already exists, use --force to overwrite'
+        return
+      end
+
+      artifacts = collect_artifacts
+
+      if artifacts.empty?
+        puts 'no jar dependencies found'
+        return
+      end
 
       puts
       puts '-- jar root dependencies --'
       puts
-      status = maven.exec(*args)
-      exit 1 unless status
-      if File.exist?(tree)
+      artifacts.each do |a|
+        puts "      #{a.to_gacv}:#{a.scope || 'compile'}"
+        puts "          exclusions: #{a.exclusions}" if a.exclusions && !a.exclusions.empty?
+      end
+
+      context = Mima.create_context
+      begin
+        resolved = Mima.resolve_with_context(context, artifacts, all_dependencies: true)
+      ensure
+        context.close
+      end
+
+      # Write Jars.lock
+      File.open(lock_file, 'w') do |f|
+        resolved.each do |dep|
+          next unless dep.type == 'jar'
+
+          f.puts dep.to_lock_entry
+        end
+      end
+
+      # Optionally vendor jars
+      if vendor_dir
+        vendor_path = File.expand_path(vendor_dir)
+        resolved.each do |dep|
+          next unless dep.type == 'jar' && dep.runtime? && !dep.system?
+
+          target = File.join(vendor_path, dep.jar_path)
+          FileUtils.mkdir_p(File.dirname(target))
+          FileUtils.cp(dep.file, target)
+        end
+      end
+
+      if tree
         puts
         puts '-- jar dependency tree --'
         puts
-        puts File.read(tree)
+        resolved.each do |dep|
+          prefix = dep.classifier ? "#{dep.classifier}:" : ''
+          puts "   #{dep.group_id}:#{dep.artifact_id}:#{prefix}#{dep.version}:#{dep.scope}"
+        end
         puts
       end
+
       puts
-      puts File.read(out).gsub("#{File.dirname(out)}/", '')
+      puts File.read(lock_file)
       puts
-    ensure
-      FileUtils.rm_f out
-      FileUtils.rm_f tree
     end
   end
 end

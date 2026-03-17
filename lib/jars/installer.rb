@@ -171,7 +171,7 @@ module Jars
     end
 
     def ruby_maven_install_options=(options)
-      @mvn.ruby_maven_install_options = options
+      # no-op: kept for backward compatibility with post_install_hook
     end
 
     def jars?

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'jar_dependencies'
-require 'jars/maven_factory'
+require 'jars/gemspec_artifacts'
 
 module Jars
   class MavenExec
@@ -65,21 +65,30 @@ module Jars
     end
 
     def resolve_dependencies_list(file)
-      factory = MavenFactory.new(@options)
-      maven = factory.maven_new(File.expand_path('gemspec_pom.rb', __dir__))
+      require 'jars/mima'
 
+      artifacts = GemspecArtifacts.new(@spec)
       is_local_file = File.expand_path(File.dirname(@specfile)) == File.expand_path(Dir.pwd)
-      maven.attach_jars(@spec, all_dependencies: is_local_file)
 
-      maven['jars.specfile'] = @specfile.to_s
-      maven['outputAbsoluteArtifactFilename'] = 'true'
-      maven['includeTypes'] = 'jar'
-      maven['outputScope'] = 'true'
-      maven['useRepositoryLayout'] = 'true'
-      maven['outputDirectory'] = Jars.home.to_s
-      maven['outputFile'] = file.to_s
+      resolved = Mima.resolve_artifacts(
+        artifacts.artifacts,
+        all_dependencies: is_local_file
+      )
 
-      maven.exec('dependency:copy-dependencies', 'dependency:list')
+      # Write output in Maven dependency:list format for Installer::Dependency compatibility
+      allowed_types = %w[jar pom].freeze
+      File.open(file, 'w') do |f|
+        f.puts
+        f.puts 'The following files have been resolved:'
+        resolved.each do |dep|
+          next unless allowed_types.include?(dep.type)
+
+          line = +"   #{dep.group_id}:#{dep.artifact_id}:#{dep.type}:"
+          line << "#{dep.classifier}:" if dep.classifier
+          line << "#{dep.version}:#{dep.scope}:#{dep.file}"
+          f.puts line
+        end
+      end
     end
   end
 end
