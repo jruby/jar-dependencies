@@ -38,7 +38,7 @@ module Jars
       def context_overrides
         ensure_loaded
 
-        builder = Java::EuMaveniverseMavenMimaContext::ContextOverrides.create
+        builder = Java::eu.maveniverse.maven.mima.context.ContextOverrides.create
         builder.withUserSettings(true)
 
         # Local repository override
@@ -61,7 +61,7 @@ module Jars
         ensure_loaded
 
         overrides ||= context_overrides
-        runtime = Java::EuMaveniverseMavenMimaContext::Runtimes::INSTANCE.getRuntime
+        runtime = Java::eu.maveniverse.maven.mima.context.Runtimes::INSTANCE.getRuntime
         runtime.create(overrides)
       end
 
@@ -86,11 +86,11 @@ module Jars
         deps = artifacts_to_dependencies(artifacts, all_dependencies: all_dependencies)
         return [] if deps.empty?
 
-        collect_request = Java::OrgEclipseAetherCollection::CollectRequest.new
+        collect_request = org.eclipse.aether.collection.CollectRequest.new
         deps.each { |d| collect_request.addDependency(d) }
         collect_request.setRepositories(context.remoteRepositories)
 
-        dependency_request = Java::OrgEclipseAetherResolution::DependencyRequest.new
+        dependency_request = org.eclipse.aether.resolution.DependencyRequest.new
         dependency_request.setCollectRequest(collect_request)
 
         result = context.repositorySystem.resolveDependencies(
@@ -112,13 +112,11 @@ module Jars
         filtered.map do |a|
           aether_artifact = build_aether_artifact(a)
           scope = a.scope || 'compile'
-          dep = Java::OrgEclipseAetherGraph::Dependency.new(aether_artifact, scope)
+          dep = org.eclipse.aether.graph.Dependency.new(aether_artifact, scope)
 
           if a.exclusions && !a.exclusions.empty?
             exclusions = a.exclusions.map do |ex|
-              Java::OrgEclipseAetherGraph::Exclusion.new(
-                ex.group_id, ex.artifact_id, '*', '*'
-              )
+              org.eclipse.aether.graph.Exclusion.new(ex.group_id, ex.artifact_id, '*', '*')
             end
             dep = dep.setExclusions(exclusions)
           end
@@ -130,12 +128,12 @@ module Jars
       def build_aether_artifact(artifact)
         version = Jars::MavenVersion.new(artifact.version) || artifact.version
         if artifact.classifier
-          Java::OrgEclipseAetherArtifact::DefaultArtifact.new(
+          org.eclipse.aether.artifact.DefaultArtifact.new(
             artifact.group_id, artifact.artifact_id, artifact.classifier,
             artifact.type || 'jar', version
           )
         else
-          Java::OrgEclipseAetherArtifact::DefaultArtifact.new(
+          org.eclipse.aether.artifact.DefaultArtifact.new(
             artifact.group_id, artifact.artifact_id,
             artifact.type || 'jar', version
           )
