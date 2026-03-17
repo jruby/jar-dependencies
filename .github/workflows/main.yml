@@ -19,7 +19,7 @@ jobs:
           ruby-version: ${{ matrix.ruby-version }}
           bundler-cache: true
       - name: Run tests
-        run: rake specs
+        run: bundle exec rake specs
       - name: Run RuboCop
         if: matrix.ruby-version == 'jruby-10.0' # Only run RuboCop on modern JRuby; target older jrubies via .rubocop.yml
-        run: jruby -Ilib -rbundler/setup -S rubocop lib specs
+        run: bundle exec rubocop lib
