@@ -142,22 +142,23 @@ describe Jars::Classpath do
   it 'resolves classpath_string from gemspec' do
     ENV_JAVA['jars.quiet'] = 'true'
     Dir.chdir(File.dirname(example_spec)) do
-      _(Helper.prepare(subject.classpath_string.split(File::PATH_SEPARATOR))).must_equal Helper.prepare(example_expected)
+      _(Helper.prepare(subject.classpath_string.split(File::PATH_SEPARATOR)))
+        .must_equal Helper.prepare(example_expected)
 
       _(Helper.prepare(subject.classpath_string(:compile).split(File::PATH_SEPARATOR)))
-            .must_equal Helper.prepare(
-              expected_with_bc + ['org/slf4j/slf4j-simple/1.7.7/slf4j-simple-1.7.7.jar']
-            )
+        .must_equal Helper.prepare(
+          expected_with_bc + ['org/slf4j/slf4j-simple/1.7.7/slf4j-simple-1.7.7.jar']
+        )
 
       _(Helper.prepare(subject.classpath_string(:test).split(File::PATH_SEPARATOR)))
-            .must_equal Helper.prepare(expected_with_bc + [
-              'junit/junit/4.12/junit-4.12.jar',
-              'org/slf4j/slf4j-simple/1.7.7/slf4j-simple-1.7.7.jar',
-              'org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar'
-            ])
+        .must_equal Helper.prepare(expected_with_bc + [
+          'junit/junit/4.12/junit-4.12.jar',
+          'org/slf4j/slf4j-simple/1.7.7/slf4j-simple-1.7.7.jar',
+          'org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar'
+        ])
 
       _(Helper.prepare(subject.classpath_string(:runtime).split(File::PATH_SEPARATOR)))
-            .must_equal Helper.prepare(example_expected)
+        .must_equal Helper.prepare(example_expected)
     end
   end
 

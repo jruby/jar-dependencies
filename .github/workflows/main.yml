@@ -27,4 +27,5 @@ jobs:
       - name: Run test
         run: jruby -Ilib -rbundler/setup -S rake specs
       - name: Run RuboCop
-        run: jruby -Ilib -rbundler/setup -S rubocop lib
+        if: matrix.ruby-version == 'jruby-10.0' # Only run RuboCop on modern JRuby; target older jrubies via .rubocop.yml
+        run: jruby -Ilib -rbundler/setup -S rubocop lib specs

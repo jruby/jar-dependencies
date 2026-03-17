@@ -4,7 +4,7 @@
 
 def eval_file(file)
   file = File.join(__dir__, file)
-  eval(File.read(file), nil, file)  # rubocop:disable Security/Eval
+  eval(File.read(file), nil, file) # rubocop:disable Security/Eval
 end
 
 eval_file('attach_jars_pom.rb')

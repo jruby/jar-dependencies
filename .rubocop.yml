@@ -1,6 +1,7 @@
-require:
+plugins:
   - rubocop-rake
   - rubocop-performance
+  - rubocop-minitest
 
 AllCops:
   TargetRubyVersion: 2.6
