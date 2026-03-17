@@ -14,7 +14,7 @@ module Jars
     class << self
       @@jars_loaded = nil
 
-      # Loads the bundled Mima uber jar and SLF4J jars onto the classpath.
+      # Loads the bundled Mima jars onto the classpath.
       # Safe to call multiple times; only loads once.
       def ensure_jars_loaded
         return if @@jars_loaded
@@ -22,6 +22,7 @@ module Jars
         mima_dir = File.expand_path('mima', File.dirname(__FILE__)).freeze
         load File.join(mima_dir, "slf4j-api-#{SLF4J_VERSION}.jar")
         load File.join(mima_dir, "slf4j-simple-#{SLF4J_VERSION}.jar")
+        load File.join(mima_dir, "context-#{MIMA_VERSION}.jar")
         load File.join(mima_dir, "standalone-static-uber-#{MIMA_VERSION}.jar")
 
         @@jars_loaded = true
