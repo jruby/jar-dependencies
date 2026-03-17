@@ -1,42 +1,33 @@
 # frozen_string_literal: true
 
-require 'jar_dependencies'
 require 'jars/gemspec_artifacts'
 
 module Jars
   # Resolver backed by the Mima Java library (MIni MAven).
   # Replaces the previous ruby-maven based resolution pipeline.
   #
-  # Mima wraps the Maven Resolver (Aether) API as a standalone library.
-  # JRuby calls the Java API directly - no Maven process is spawned.
+  # Mima wraps the Maven Resolver (Aether) API as a standalone library (no Maven process is spawned).
   module Mima
     MIMA_VERSION = '2.4.42'
     SLF4J_VERSION = '1.7.36'
 
-    MIMA_DIR = File.expand_path('mima', __dir__).freeze
-
-    JARS = [
-      File.join(MIMA_DIR, "standalone-static-uber-#{MIMA_VERSION}.jar"),
-      File.join(MIMA_DIR, "slf4j-api-#{SLF4J_VERSION}.jar"),
-      File.join(MIMA_DIR, "jcl-over-slf4j-#{SLF4J_VERSION}.jar"),
-      File.join(MIMA_DIR, "slf4j-simple-#{SLF4J_VERSION}.jar")
-    ].freeze
-
     class << self
-      def ensure_loaded
-        return if @loaded
+      @@jars_loaded = nil
+      def ensure_jars_loaded
+        return if @@jars_loaded
 
-        JARS.each do |jar|
-          raise "Mima jar not found: #{jar}" unless File.exist?(jar)
+        mima_dir = File.expand_path('mima', File.dirname(__FILE__)).freeze
+        load File.join(mima_dir, "standalone-static-uber-#{MIMA_VERSION}.jar")
+        load File.join(mima_dir, "slf4j-api-#{SLF4J_VERSION}.jar")
+        load File.join(mima_dir, "jcl-over-slf4j-#{SLF4J_VERSION}.jar")
+        load File.join(mima_dir, "slf4j-simple-#{SLF4J_VERSION}.jar")
 
-          require jar
-        end
-        @loaded = true
+        @@jars_loaded = true
       end
 
       # Build a ContextOverrides from jar-dependencies configuration.
       def context_overrides
-        ensure_loaded
+        ensure_jars_loaded
 
         builder = Java::eu.maveniverse.maven.mima.context.ContextOverrides.create
         builder.withUserSettings(true)
@@ -58,7 +49,7 @@ module Jars
 
       # Create a Mima Context. Caller must close it.
       def create_context(overrides = nil)
-        ensure_loaded
+        ensure_jars_loaded
 
         overrides ||= context_overrides
         runtime = Java::eu.maveniverse.maven.mima.context.Runtimes::INSTANCE.getRuntime
@@ -166,9 +157,7 @@ module Jars
     end
 
     # Structured result from resolution.
-    ResolvedDependency = Struct.new(
-      :group_id, :artifact_id, :version, :classifier, :type, :scope, :file
-    ) do
+    ResolvedDependency = Struct.new(:group_id, :artifact_id, :version, :classifier, :type, :scope, :file) do
       def runtime?
         scope != 'test' && scope != 'provided'
       end
