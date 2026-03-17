@@ -21,7 +21,6 @@ module Jars
 
         mima_dir = File.expand_path('mima', File.dirname(__FILE__)).freeze
         load File.join(mima_dir, "slf4j-api-#{SLF4J_VERSION}.jar")
-        load File.join(mima_dir, "jcl-over-slf4j-#{SLF4J_VERSION}.jar")
         load File.join(mima_dir, "slf4j-simple-#{SLF4J_VERSION}.jar")
         load File.join(mima_dir, "standalone-static-uber-#{MIMA_VERSION}.jar")
 
