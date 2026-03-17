@@ -70,10 +70,7 @@ module Jars
       artifacts = GemspecArtifacts.new(@spec)
       is_local_file = File.expand_path(File.dirname(@specfile)) == File.expand_path(Dir.pwd)
 
-      resolved = Mima.resolve_artifacts(
-        artifacts.artifacts,
-        all_dependencies: is_local_file
-      )
+      resolved = Jars::Mima.resolve_artifacts(artifacts.artifacts, all_dependencies: is_local_file)
 
       # Write output in Maven dependency:list format for Installer::Dependency compatibility
       allowed_types = %w[jar pom].freeze

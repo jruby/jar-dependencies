@@ -51,8 +51,9 @@ module Jars
     UNKNOWN = 'unknown'
   end
 
-  autoload :MavenSettings, 'jars/maven_settings'
   autoload :Classpath, 'jars/classpath'
+  autoload :MavenSettings, 'jars/maven_settings'
+  autoload :Mima, 'jars/mima'
 
   @jars_lock = false
   @jars = {}
