@@ -9,9 +9,8 @@ module Jars
   #
   # Mima wraps the Maven Resolver (Aether) API as a standalone library (no Maven process is spawned).
   module Mima
-
     class << self
-      @@jars_loaded = nil
+      @@jars_loaded = nil # rubocop:disable Style/ClassVars
 
       # Loads the bundled Mima jars onto the classpath.
       # Safe to call multiple times; only loads once.
@@ -26,7 +25,7 @@ module Jars
         load File.join(mima_dir, "context-#{MIMA_VERSION}.jar")
         load File.join(mima_dir, "standalone-static-uber-#{MIMA_VERSION}.jar")
 
-        @@jars_loaded = true
+        @@jars_loaded = true # rubocop:disable Style/ClassVars
       end
 
       # Builds a +ContextOverrides+ from jar-dependencies configuration
