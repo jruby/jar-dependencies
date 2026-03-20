@@ -6,3 +6,4 @@ build.log
 pom*
 specs/repository/*
 example/dependencies.list
+lib/jars/mima/*.jar

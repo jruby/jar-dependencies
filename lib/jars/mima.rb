@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'jars/mima/version'
 require 'jars/gemspec_artifacts'
 
 module Jars
@@ -8,8 +9,6 @@ module Jars
   #
   # Mima wraps the Maven Resolver (Aether) API as a standalone library (no Maven process is spawned).
   module Mima
-    MIMA_VERSION = '2.4.42'
-    SLF4J_VERSION = '1.7.36'
 
     class << self
       @@jars_loaded = nil
@@ -19,7 +18,8 @@ module Jars
       def ensure_jars_loaded
         return if @@jars_loaded
 
-        mima_dir = File.expand_path('mima', File.dirname(__FILE__)).freeze
+        mima_dir = File.expand_path('mima', File.dirname(__FILE__))
+
         load File.join(mima_dir, "slf4j-api-#{SLF4J_VERSION}.jar")
         load File.join(mima_dir, "slf4j-simple-#{SLF4J_VERSION}.jar")
         load File.join(mima_dir, "jcl-over-slf4j-#{SLF4J_VERSION}.jar")
