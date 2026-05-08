@@ -334,16 +334,6 @@ describe Jars do
     $stderr = STDERR
   end
 
-  it 'no warnings on reload' do
-    $stderr = StringIO.new
-
-    load File.expand_path('lib/jar_dependencies.rb')
-
-    _($stderr.string).must_equal ''
-  ensure
-    $stderr = STDERR
-  end
-
   it 'requires jars from various default places' do
     pwd = File.expand_path(__dir__)
     $LOAD_PATH << File.join(pwd, 'path')

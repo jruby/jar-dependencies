@@ -22,34 +22,34 @@
 #
 
 module Jars
-  unless defined? Jars::SKIP_LOCK
-    MAVEN_SETTINGS = 'JARS_MAVEN_SETTINGS'
-    LOCAL_MAVEN_REPO = 'JARS_LOCAL_MAVEN_REPO'
-    # lock file to use
-    LOCK = 'JARS_LOCK'
-    # where the locally stored jars are search for or stored
-    HOME = 'JARS_HOME'
-    # skip the gem post install hook
-    SKIP = 'JARS_SKIP'
-    # skip Jars.lock mainly to run lock_jars
-    SKIP_LOCK = 'JARS_SKIP_LOCK'
-    # do not require any jars if set to false
-    REQUIRE = 'JARS_REQUIRE'
-    # @private
-    NO_REQUIRE = 'JARS_NO_REQUIRE'
-    # no more warnings on conflict. this still requires jars but will
-    # not warn. it is needed to load jars from (default) gems which
-    # do contribute to any dependency manager (maven, gradle, jbundler)
-    QUIET = 'JARS_QUIET'
-    # show resolver output
-    VERBOSE = 'JARS_VERBOSE'
-    # show jar-dependencies debug output
-    DEBUG = 'JARS_DEBUG'
-    # vendor jars inside gem when installing gem
-    VENDOR = 'JARS_VENDOR'
-    # string used when the version is unknown
-    UNKNOWN = 'unknown'
-  end
+  # rubocop:disable Style/RedundantFreeze
+  MAVEN_SETTINGS = 'JARS_MAVEN_SETTINGS'.freeze
+  LOCAL_MAVEN_REPO = 'JARS_LOCAL_MAVEN_REPO'.freeze
+  # lock file to use
+  LOCK = 'JARS_LOCK'.freeze
+  # where the locally stored jars are search for or stored
+  HOME = 'JARS_HOME'.freeze
+  # skip the gem post install hook
+  SKIP = 'JARS_SKIP'.freeze
+  # skip Jars.lock mainly to run lock_jars
+  SKIP_LOCK = 'JARS_SKIP_LOCK'.freeze
+  # do not require any jars if set to false
+  REQUIRE = 'JARS_REQUIRE'.freeze
+  # @private
+  NO_REQUIRE = 'JARS_NO_REQUIRE'.freeze
+  # no more warnings on conflict. this still requires jars but will
+  # not warn. it is needed to load jars from (default) gems which
+  # do contribute to any dependency manager (maven, gradle, jbundler)
+  QUIET = 'JARS_QUIET'.freeze
+  # show resolver output
+  VERBOSE = 'JARS_VERBOSE'.freeze
+  # show jar-dependencies debug output
+  DEBUG = 'JARS_DEBUG'.freeze
+  # vendor jars inside gem when installing gem
+  VENDOR = 'JARS_VENDOR'.freeze
+  # string used when the version is unknown
+  UNKNOWN = 'unknown'.freeze
+  # rubocop:enable Style/RedundantFreeze
 
   autoload :Classpath, 'jars/classpath'
   autoload :MavenSettings, 'jars/maven_settings'
