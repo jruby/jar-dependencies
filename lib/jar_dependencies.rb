@@ -51,8 +51,9 @@ module Jars
     UNKNOWN = 'unknown'
   end
 
-  autoload :MavenSettings, 'jars/maven_settings'
   autoload :Classpath, 'jars/classpath'
+  autoload :MavenSettings, 'jars/maven_settings'
+  autoload :Mima, 'jars/mima'
 
   @jars_lock = false
   @jars = {}
@@ -144,12 +145,7 @@ module Jars
     def jars_lock_from_class_loader
       return unless defined?(JRUBY_VERSION)
 
-      if JRuby::Util.respond_to?(:class_loader_resources)
-        JRuby::Util.class_loader_resources('Jars.lock')
-      else
-        require 'jruby'
-        JRuby.runtime.jruby_class_loader.get_resources('Jars.lock').collect(&:to_s)
-      end
+      JRuby::Util.class_loader_resources('Jars.lock')
     end
 
     def lock_path(basedir = nil)

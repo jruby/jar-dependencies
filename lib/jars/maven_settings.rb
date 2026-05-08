@@ -2,8 +2,6 @@
 
 module Jars
   class MavenSettings
-    LINE_SEPARATOR = ENV_JAVA['line.separator']
-
     class << self
       def local_settings
         @_jars_maven_local_settings_ = nil unless instance_variable_defined?(:@_jars_maven_local_settings_)
@@ -36,36 +34,6 @@ module Jars
         @_jars_maven_user_settings_ || nil
       end
 
-      def effective_settings
-        @_jars_effective_maven_settings_ = nil unless instance_variable_defined?(:@_jars_effective_maven_settings_)
-        if @_jars_effective_maven_settings_.nil?
-          begin
-            require 'rubygems/request'
-
-            http = Gem::Request.proxy_uri(Gem.configuration[:http_proxy] || Gem::Request.get_proxy_from_env('http'))
-            https = Gem::Request.proxy_uri(Gem.configuration[:https_proxy] || Gem::Request.get_proxy_from_env('https'))
-          rescue
-            Jars.debug('ignore rubygems proxy configuration as rubygems is too old')
-          end
-          @_jars_effective_maven_settings_ = if http.nil? && https.nil?
-                                               settings
-                                             else
-                                               setup_interpolated_settings(http, https) || settings
-                                             end
-        end
-        @_jars_effective_maven_settings_
-      end
-
-      def cleanup
-        File.unlink(effective_settings) if effective_settings != settings
-      ensure
-        reset
-      end
-
-      def reset
-        instance_variables.each { |var| instance_variable_set(var, nil) }
-      end
-
       def settings
         @_jars_maven_settings_ = nil unless instance_variable_defined?(:@_jars_maven_settings_)
         local_settings || user_settings if @_jars_maven_settings_.nil?
@@ -85,44 +53,8 @@ module Jars
         @_jars_maven_global_settings_ || nil
       end
 
-      private
-
-      def setup_interpolated_settings(http, https)
-        proxy = raw_proxy_settings_xml(http, https).gsub("\n", LINE_SEPARATOR)
-        if settings.nil?
-          raw = "<settings>#{LINE_SEPARATOR}#{proxy}</settings>"
-        else
-          raw = File.read(settings)
-          if raw.include?('<proxy>')
-            Jars.warn("can not interpolated proxy info for #{settings}")
-            return
-          else
-            raw.sub!('<settings>', "<settings>#{LINE_SEPARATOR}#{proxy}")
-          end
-        end
-        tempfile = java.io.File.create_temp_file('settings', '.xml')
-        tempfile.delete_on_exit
-        File.write(tempfile.path, raw)
-        tempfile.path
-      end
-
-      def raw_proxy_settings_xml(http, https)
-        raw = File.read(File.join(File.dirname(__FILE__), 'settings.xml'))
-        if http
-          raw.sub!('__HTTP_ACTIVE__', 'true')
-          raw.sub!('__HTTP_SERVER__', http.host)
-          raw.sub!('__HTTP_PORT__', http.port.to_s)
-        else
-          raw.sub!('__HTTP_ACTIVE__', 'false')
-        end
-        if https
-          raw.sub!('__HTTPS_ACTIVE__', 'true')
-          raw.sub!('__HTTPS_SERVER__', https.host)
-          raw.sub!('__HTTPS_PORT__', https.port.to_s)
-        else
-          raw.sub!('__HTTPS_ACTIVE__', 'false')
-        end
-        raw
+      def reset
+        instance_variables.each { |var| instance_variable_set(var, nil) }
       end
     end
   end
