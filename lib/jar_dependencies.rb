@@ -58,6 +58,8 @@ module Jars
   @jars_lock = false
   @jars = {}
 
+  class JarLoadError < LoadError; end
+
   class << self
     def lock_down(debug: nil, verbose: nil, **kwargs)
       previous_debug = ENV[DEBUG]
@@ -360,9 +362,9 @@ module Jars
         require jar
       end
     rescue LoadError => e
-      raise "\n\n\tyou might need to reinstall the gem which depends on the " \
-            'missing jar or in case there is Jars.lock then resolve the jars with ' \
-            "`lock_jars` command\n\n#{e.message} (LoadError)"
+      Jars.warn "failed to load jar: #{jar} (#{e.message})"
+      Jars.debug(e)
+      raise JarLoadError, "failed to load jar: #{jar}; run `lock_jars` or reinstall the gem"
     end
   end
 end

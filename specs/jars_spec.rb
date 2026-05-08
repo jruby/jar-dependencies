@@ -106,7 +106,7 @@ describe Jars do
                  'skipping requested version 1.6.4'
       _($stderr.string).must_include 'jar registration: ["org.slf4j", "slf4j-simple", "1.6.6"]; loaded=true'
       _($stderr.string).must_include conflict
-      _($stderr.string).must_include "\n\tspecs/jars_spec.rb"
+      _($stderr.string).must_match(%r{\n\t.*/?specs/jars_spec\.rb})
     ensure
       $stderr = STDERR
       ENV['JARS_HOME'] = nil
@@ -187,8 +187,16 @@ describe Jars do
     ENV['JARS_LOCAL_MAVEN_REPO'] = nil
   end
 
-  it 'raises RuntimeError on requires of unknown group-id' do
-    _ { require_jar('org.something', 'slf4j-simple', '1.6.6') }.must_raise RuntimeError
+  it 'raises a concise error on requires of unknown group-id' do
+    $stderr = StringIO.new
+    error = _ { require_jar('org.something', 'slf4j-simple', '1.6.6') }.must_raise Jars::JarLoadError
+
+    _(error).must_be_kind_of LoadError
+    _(error.message).must_equal 'failed to load jar: org/something/slf4j-simple/1.6.6/slf4j-simple-1.6.6.jar; ' \
+                                'run `lock_jars` or reinstall the gem'
+    _($stderr.string).must_include 'failed to load jar: org/something/slf4j-simple/1.6.6/slf4j-simple-1.6.6.jar'
+  ensure
+    $stderr = STDERR
   end
 
   it 'does not require jar but sets version to unknown' do
@@ -251,7 +259,7 @@ describe Jars do
     begin
       $stderr = StringIO.new
 
-      _ { require_jar('org.slf4j', 'slf4j-simple', '1.6.6') }.must_raise RuntimeError
+      _ { require_jar('org.slf4j', 'slf4j-simple', '1.6.6') }.must_raise Jars::JarLoadError
 
       $stderr.flush
 
