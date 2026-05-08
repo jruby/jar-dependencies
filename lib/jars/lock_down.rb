@@ -59,14 +59,11 @@ module Jars
         end
       end
     rescue LoadError => e
-      if Jars.verbose?
-        warn e.message
-        warn 'no bundler found - ignore Gemfile if exists'
-      end
+      Jars.warn "bundler unavailable (#{e.message}); skipping dependency discovery" if Jars.verbose?
     rescue Bundler::GemfileNotFound
-    # do nothing then as we have bundler but no Gemfile
+      # bundler is available, but there is no Gemfile to inspect
     rescue Bundler::GemNotFound
-      warn "can not setup bundler with #{Bundler.default_lockfile}"
+      Jars.warn "cannot set up bundler with #{Bundler.default_lockfile}"
       raise
     ensure
       $LOAD_PATH.replace(load_path)

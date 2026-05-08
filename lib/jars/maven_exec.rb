@@ -13,7 +13,7 @@ module Jars
       when 1
         specs.first
       else
-        raise 'more then one gemspec found. please specify a specfile' unless allow_no_file
+        raise 'more than one gemspec found; please specify a specfile' unless allow_no_file
       end
     end
     private :find_spec
@@ -24,9 +24,8 @@ module Jars
       @options = {}
       setup(spec)
     rescue StandardError, LoadError => e
-      # If spec load fails, skip looking for jar-dependencies
-      warn "jar-dependencies: #{e}"
-      warn e.backtrace.join("\n") if Jars.verbose?
+      Jars.warn "unable to load gemspec (#{e.message}); skipping jar dependency discovery"
+      Jars.debug(e)
     end
 
     def setup(spec = nil, allow_no_file: false)
@@ -54,8 +53,7 @@ module Jars
       when nil
         # ignore
       else
-        Jars.debug('spec must be either String or Gem::Specification. ' \
-                   'File an issue on github if you need it.')
+        Jars.debug "unsupported spec argument #{spec.class}; expected String or Gem::Specification"
       end
       @spec = spec
     end

@@ -166,8 +166,8 @@ xalan/xerces libraries used by those gems are popular ones in the Java world.
 
 # Troubleshooting
 
-Since maven is used under the hood it is possible to get more insight
-what maven is doing. Show the regular maven output:
+Jar dependency resolution uses the bundled Mima resolver. To get more
+insight into jar-dependencies progress and warnings, enable verbose output:
 
 ```shell
 JARS_VERBOSE=true bundle install
@@ -175,18 +175,13 @@ JARS_VERBOSE=true gem install some_gem
 ```
 
 
-Or, with maven debug enabled
+For Ruby-side debug diagnostics, including backtraces for suppressed setup
+errors and jar loading decisions, enable debug output:
 
 ```shell
 JARS_DEBUG=true bundle install
 JARS_DEBUG=true gem install some_gem
 ```
-
-The maven command line which gets printed needs maven-3.9.x and the
-ruby DSL extension for maven:
-[polyglot-maven
-configuration](https://github.com/takari/polyglot-maven#configuration) where `${maven.multiModuleProjectDirectory}` is
-your current directory.
 
 # Configuration
 
@@ -195,10 +190,10 @@ your current directory.
 <td>ENV</td><td>java system property</td><td>default</td><td>description</td>
 </tr>
 <tr>
-<td><tt>JARS_DEBUG</tt></td><td>jars.debug</td><td>false</td><td>if set to true it will produce lots of debug out (maven -X switch)</td>
+<td><tt>JARS_DEBUG</tt></td><td>jars.debug</td><td>false</td><td>if set to true it will produce Ruby-side debug diagnostics and implies verbose output</td>
 </tr>
 <tr>
-<td><tt>JARS_VERBOSE</tt></td><td>jars.verbose</td><td>false</td><td>if set to true it will produce some extra output</td>
+<td><tt>JARS_VERBOSE</tt></td><td>jars.verbose</td><td>false</td><td>if set to true it will produce some extra resolver output</td>
 </tr>
 <tr>
 <td><tt>JARS_HOME</tt></td><td>jars.home</td><td>$HOME/.m2/repository</td><td>filesystem location where to store the jar files and some metadata</td>
