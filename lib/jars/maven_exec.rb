@@ -21,7 +21,6 @@ module Jars
     attr_reader :basedir, :spec, :specfile
 
     def initialize(spec = nil)
-      @options = {}
       setup(spec)
     rescue StandardError, LoadError => e
       Jars.warn "unable to load gemspec (#{e.message}); skipping jar dependency discovery"
@@ -44,8 +43,7 @@ module Jars
           @specfile = spec.loaded_from
         else
           # this happens with bundle and local gems
-          # there the spec_file is "not installed" but inside
-          # the gem_dir directory
+          # there spec_file is "not installed" but is inside the gem_dir directory
           Dir.chdir(spec.gem_dir) do
             setup(nil, allow_no_file: true)
           end
@@ -56,10 +54,6 @@ module Jars
         Jars.debug "unsupported spec argument #{spec.class}; expected String or Gem::Specification"
       end
       @spec = spec
-    end
-
-    def ruby_maven_install_options=(options)
-      @options = options
     end
 
     def resolve_dependencies_list(file)
