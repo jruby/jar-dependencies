@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'lib/jars/version'
+require_relative 'lib/jars/mima/version'
 
 Gem::Specification.new do |s|
   s.name = 'jar-dependencies'
@@ -18,6 +19,8 @@ Gem::Specification.new do |s|
   s.license = 'MIT'
 
   s.files = Dir['{lib}/**/*'] + %w[Mavenfile Rakefile Readme.md jar-dependencies.gemspec MIT-LICENSE]
+  # explicitly require the jars
+  s.files += Jars::Mima::JARS.each_key.map {File.join(Jars::Mima::MIMA_DIR, _1)}
 
   s.description = <<~TEXT
     manage jar dependencies for gems and keep track which jar was already

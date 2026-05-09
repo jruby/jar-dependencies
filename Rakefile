@@ -21,32 +21,8 @@ require_relative 'lib/jars/mima/version'
 
 MIMA_VERSION = Jars::Mima::MIMA_VERSION
 SLF4J_VERSION = Jars::Mima::SLF4J_VERSION
-MAVEN_CENTRAL = 'https://repo.maven.apache.org/maven2'
-MIMA_DIR = 'lib/jars/mima'
-
-# URL and SHA-1 checksum (as published on Maven Central) for each jar
-MIMA_JARS = {
-  "slf4j-api-#{SLF4J_VERSION}.jar" => {
-    url: "#{MAVEN_CENTRAL}/org/slf4j/slf4j-api/#{SLF4J_VERSION}/slf4j-api-#{SLF4J_VERSION}.jar",
-    sha1: '6c62681a2f655b49963a5983b8b0950a6120ae14'
-  },
-  "slf4j-simple-#{SLF4J_VERSION}.jar" => {
-    url: "#{MAVEN_CENTRAL}/org/slf4j/slf4j-simple/#{SLF4J_VERSION}/slf4j-simple-#{SLF4J_VERSION}.jar",
-    sha1: 'a41f9cfe6faafb2eb83a1c7dd2d0dfd844e2a936'
-  },
-  "jcl-over-slf4j-#{SLF4J_VERSION}.jar" => {
-    url: "#{MAVEN_CENTRAL}/org/slf4j/jcl-over-slf4j/#{SLF4J_VERSION}/jcl-over-slf4j-#{SLF4J_VERSION}.jar",
-    sha1: 'd877e195a05aca4a2f1ad2ff14bfec1393af4b5e'
-  },
-  "context-#{MIMA_VERSION}.jar" => {
-    url: "#{MAVEN_CENTRAL}/eu/maveniverse/maven/mima/context/#{MIMA_VERSION}/context-#{MIMA_VERSION}.jar",
-    sha1: '72aa4d9ccef7a329f473e43752ec863c5194c72c'
-  },
-  "standalone-static-uber-#{MIMA_VERSION}.jar" => {
-    url: "#{MAVEN_CENTRAL}/eu/maveniverse/maven/mima/runtime/standalone-static-uber/#{MIMA_VERSION}/standalone-static-uber-#{MIMA_VERSION}.jar",
-    sha1: '43666099e6eb31610f9d3b146811479dd3e4aef1'
-  }
-}.freeze
+MIMA_JARS = Jars::Mima::JARS
+MIMA_DIR = Jars::Mima::MIMA_DIR
 
 MIMA_JARS.each_key { |jar| CLEAN.include(File.join(MIMA_DIR, jar)) }
 
