@@ -178,10 +178,11 @@ module Jars
       # first look if there are any requirements in the spec
       # and then if gem depends on jar-dependencies for runtime.
       # only then install the jars declared in the requirements
-      result = (spec = self.spec) && !spec.requirements.empty? &&
+      spec = self.spec
+      result = spec && !spec.requirements.empty? &&
                spec.dependencies.detect { |d| d.name == 'jar-dependencies' && d.type == :runtime }
       if result && spec.platform.to_s != 'java'
-        Jars.warn "\njar dependencies found on non-java platform gem - do not install jars\n"
+        Jars.warn "jar-dependencies found on non-java platform gem; skipping jar installation"
         false
       else
         result
@@ -191,21 +192,18 @@ module Jars
     private
 
     def do_install(vendor_dir, write_require_file)
-      if !spec.require_paths.include?(vendor_dir) && vendor_dir
-        raise "vendor dir #{vendor_dir} not in require_paths of gemspec #{spec.require_paths}"
+      require_paths = spec.require_paths
+      if vendor_dir && !require_paths.include?(vendor_dir)
+        raise "vendor dir #{vendor_dir} not in require_paths of gemspec #{require_paths}"
       end
 
       target_dir = File.join(@mvn.basedir, vendor_dir || spec.require_path)
       jars_file = File.join(target_dir, "#{spec.name}_jars.rb")
 
-      # write out new jars_file it write_require_file is true or
-      # check timestamps:
-      # do not generate file if specfile is older then the generated file
-      if !write_require_file &&
-         File.exist?(jars_file) &&
-         File.mtime(@mvn.specfile) < File.mtime(jars_file)
-        # leave jars_file as is
-        jars_file = nil
+      # write out new jars_file if write_require_file is true or check timestamps:
+      # do not generate file if specfile is older than the generated file
+      if !write_require_file && File.exist?(jars_file) && File.mtime(@mvn.specfile) < File.mtime(jars_file)
+        jars_file = nil # leave jars_file as is
       end
       deps = install_dependencies
       self.class.write_require_jars(deps, jars_file)

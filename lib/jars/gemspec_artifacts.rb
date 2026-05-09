@@ -30,7 +30,7 @@ module Jars
         elsif arg.include?('<=')
           val = arg.sub(/<=\s*/, '')
           [low, "#{snapshot_version(val)}]"]
-        # treat '!' the same way as '>' since maven can not describe such range
+        # treat '!' the same way as '>' since maven cannot describe such range
         elsif /[!>]/.match?(arg)
           val = arg.sub(/[!>]\s*/, '')
           ["(#{snapshot_version(val)}", high]

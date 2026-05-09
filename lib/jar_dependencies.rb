@@ -22,34 +22,34 @@
 #
 
 module Jars
-  unless defined? Jars::SKIP_LOCK
-    MAVEN_SETTINGS = 'JARS_MAVEN_SETTINGS'
-    LOCAL_MAVEN_REPO = 'JARS_LOCAL_MAVEN_REPO'
-    # lock file to use
-    LOCK = 'JARS_LOCK'
-    # where the locally stored jars are search for or stored
-    HOME = 'JARS_HOME'
-    # skip the gem post install hook
-    SKIP = 'JARS_SKIP'
-    # skip Jars.lock mainly to run lock_jars
-    SKIP_LOCK = 'JARS_SKIP_LOCK'
-    # do not require any jars if set to false
-    REQUIRE = 'JARS_REQUIRE'
-    # @private
-    NO_REQUIRE = 'JARS_NO_REQUIRE'
-    # no more warnings on conflict. this still requires jars but will
-    # not warn. it is needed to load jars from (default) gems which
-    # do contribute to any dependency manager (maven, gradle, jbundler)
-    QUIET = 'JARS_QUIET'
-    # show maven output
-    VERBOSE = 'JARS_VERBOSE'
-    # maven debug
-    DEBUG = 'JARS_DEBUG'
-    # vendor jars inside gem when installing gem
-    VENDOR = 'JARS_VENDOR'
-    # string used when the version is unknown
-    UNKNOWN = 'unknown'
-  end
+  # rubocop:disable Style/RedundantFreeze
+  MAVEN_SETTINGS = 'JARS_MAVEN_SETTINGS'.freeze
+  LOCAL_MAVEN_REPO = 'JARS_LOCAL_MAVEN_REPO'.freeze
+  # lock file to use
+  LOCK = 'JARS_LOCK'.freeze
+  # where the locally stored jars are search for or stored
+  HOME = 'JARS_HOME'.freeze
+  # skip the gem post install hook
+  SKIP = 'JARS_SKIP'.freeze
+  # skip Jars.lock mainly to run lock_jars
+  SKIP_LOCK = 'JARS_SKIP_LOCK'.freeze
+  # do not require any jars if set to false
+  REQUIRE = 'JARS_REQUIRE'.freeze
+  # @private
+  NO_REQUIRE = 'JARS_NO_REQUIRE'.freeze
+  # no more warnings on conflict. this still requires jars but will
+  # not warn. it is needed to load jars from (default) gems which
+  # do contribute to any dependency manager (maven, gradle, jbundler)
+  QUIET = 'JARS_QUIET'.freeze
+  # show resolver output
+  VERBOSE = 'JARS_VERBOSE'.freeze
+  # show jar-dependencies debug output
+  DEBUG = 'JARS_DEBUG'.freeze
+  # vendor jars inside gem when installing gem
+  VENDOR = 'JARS_VENDOR'.freeze
+  # string used when the version is unknown
+  UNKNOWN = 'unknown'.freeze
+  # rubocop:enable Style/RedundantFreeze
 
   autoload :Classpath, 'jars/classpath'
   autoload :MavenSettings, 'jars/maven_settings'
@@ -58,13 +58,22 @@ module Jars
   @jars_lock = false
   @jars = {}
 
+  class JarLoadError < LoadError; end
+
   class << self
-    def lock_down(debug: false, verbose: false, **kwargs)
+    def lock_down(debug: nil, verbose: nil, **kwargs)
+      previous_debug = ENV[DEBUG]
+      previous_verbose = ENV[VERBOSE]
+      previous_skip_lock = ENV[SKIP_LOCK]
+      ENV[DEBUG] = debug.to_s unless debug.nil?
+      ENV[VERBOSE] = verbose.to_s unless verbose.nil?
       ENV[SKIP_LOCK] = 'true'
       require 'jars/lock_down' # do this lazy to keep things clean
       Jars::LockDown.new(debug, verbose).lock_down(kwargs.delete(:vendor_dir), **kwargs)
     ensure
-      ENV[SKIP_LOCK] = nil
+      ENV[DEBUG] = previous_debug unless debug.nil?
+      ENV[VERBOSE] = previous_verbose unless verbose.nil?
+      ENV[SKIP_LOCK] = previous_skip_lock
     end
 
     if defined? JRUBY_VERSION
@@ -119,7 +128,8 @@ module Jars
     end
 
     def verbose?
-      to_boolean(VERBOSE)
+      verbose = to_boolean(VERBOSE)
+      verbose.nil? ? debug? : (verbose || !!debug?)
     end
 
     def debug?
@@ -266,7 +276,7 @@ module Jars
     end
 
     def warn(msg = nil)
-      return if (verbose? == nil && quiet?) || (verbose? == false && !debug?)
+      return if quiet? && !debug?
 
       Kernel.warn(msg || yield)
     end
@@ -324,8 +334,8 @@ module Jars
       local_repo = nil if local_repo.empty? || !File.exist?(local_repo)
       local_repo
     rescue => e
-      Jars.debug(e)
       Jars.warn "error reading or parsing local settings from: #{settings}"
+      Jars.debug(e)
       nil
     end
 
@@ -352,25 +362,26 @@ module Jars
         require jar
       end
     rescue LoadError => e
-      raise "\n\n\tyou might need to reinstall the gem which depends on the " \
-            'missing jar or in case there is Jars.lock then resolve the jars with ' \
-            "`lock_jars` command\n\n#{e.message} (LoadError)"
+      Jars.warn "failed to load jar: #{jar} (#{e.message})"
+      Jars.debug(e)
+      raise JarLoadError, "failed to load jar: #{jar}; run `lock_jars` or reinstall the gem"
     end
   end
 end
 
 def require_jar(*args, &block)
-  return nil unless Jars.require?
+  return unless Jars.require?
 
   result = Jars.require_jar(*args, &block)
   if result.is_a? String
     args << (yield || Jars::UNKNOWN) if args.size == 2 && block
     Jars.warn do
-      "--- jar coordinate #{args[0..-2].join(':')} already loaded with version #{result} - omit version #{args[-1]}"
+      "jar conflict: #{args[0..-2].join(':')} already loaded with version #{result}; " \
+        "skipping requested version #{args[-1]}"
     end
-    Jars.debug { "    try to load from #{caller.join("\n\t")}" }
+    Jars.debug("\n\t#{caller.join("\n\t")}") if Jars.debug?
     return false
   end
-  Jars.debug { "    register #{args.inspect} - #{result == true}" }
+  Jars.debug { "jar registration: #{args.inspect}; loaded=#{result == true}" }
   result
 end

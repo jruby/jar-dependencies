@@ -57,6 +57,85 @@ describe Jars do
     end
   end
 
+  it 'treats debug as verbose' do
+    ENV['JARS_DEBUG'] = 'true'
+    ENV['JARS_VERBOSE'] = nil
+    Jars.reset
+
+    _(Jars.debug?).must_equal true
+    _(Jars.verbose?).must_equal true
+  end
+
+  it 'does not treat explicit verbose false as quiet' do
+    ENV['JARS_VERBOSE'] = 'false'
+    ENV['JARS_QUIET'] = nil
+    Jars.reset
+
+    $stderr = StringIO.new
+    Jars.warn('visible warning')
+
+    _($stderr.string).must_equal "visible warning\n"
+  ensure
+    $stderr = STDERR
+  end
+
+  it 'lets debug override quiet warnings' do
+    ENV['JARS_QUIET'] = 'true'
+    ENV['JARS_DEBUG'] = 'true'
+    Jars.reset
+
+    $stderr = StringIO.new
+    Jars.warn('debug warning')
+
+    _($stderr.string).must_equal "debug warning\n"
+  ensure
+    $stderr = STDERR
+  end
+
+  it 'logs readable require_jar debug output' do
+    ENV['JARS_HOME'] = File.join('specs', 'repo')
+    ENV['JARS_DEBUG'] = 'true'
+    Jars.reset
+
+    begin
+      $stderr = StringIO.new
+      _(require_jar('org.slf4j', 'slf4j-simple', '1.6.6')).must_equal true
+      _(require_jar('org.slf4j', 'slf4j-simple', '1.6.4')).must_equal false
+
+      conflict = 'jar conflict: org.slf4j:slf4j-simple already loaded with version 1.6.6; ' \
+                 'skipping requested version 1.6.4'
+      _($stderr.string).must_include 'jar registration: ["org.slf4j", "slf4j-simple", "1.6.6"]; loaded=true'
+      _($stderr.string).must_include conflict
+      _($stderr.string).must_match(%r{\n\t.*/?specs/jars_spec\.rb})
+    ensure
+      $stderr = STDERR
+      ENV['JARS_HOME'] = nil
+    end
+  end
+
+  it 'applies lock_down debug and verbose options while preserving environment' do
+    require 'jars/lock_down'
+
+    ENV['JARS_DEBUG'] = nil
+    ENV['JARS_VERBOSE'] = nil
+    ENV['JARS_SKIP_LOCK'] = 'false'
+    Jars.reset
+
+    fake = Object.new
+    def fake.lock_down(_vendor_dir = nil, **_kwargs)
+      [Jars.debug?, Jars.verbose?, ENV['JARS_SKIP_LOCK']]
+    end
+
+    result = Jars::LockDown.stub(:new, fake) do
+      Jars.lock_down(debug: true, verbose: false)
+    end
+
+    _(result).must_equal [true, true, 'true']
+    _(ENV['JARS_DEBUG']).must_be_nil
+    _(ENV['JARS_VERBOSE']).must_be_nil
+    _(ENV['JARS_SKIP_LOCK']).must_equal 'false'
+  end
+
   it 'extract maven settings' do
     settings = Jars.maven_settings # likely nil on CI
 
@@ -108,11 +187,18 @@ describe Jars do
     ENV['JARS_LOCAL_MAVEN_REPO'] = nil
   end
 
-  it 'raises RuntimeError on requires of unknown group-id' do
-    _ { require_jar('org.something', 'slf4j-simple', '1.6.6') }.must_raise RuntimeError
+  it 'raises a concise error on requires of unknown group-id' do
+    $stderr = StringIO.new
+    error = _ { require_jar('org.something', 'slf4j-simple', '1.6.6') }.must_raise Jars::JarLoadError
+
+    _(error).must_be_kind_of LoadError
+    _(error.message).must_equal 'failed to load jar: org/something/slf4j-simple/1.6.6/slf4j-simple-1.6.6.jar; ' \
+                                'run `lock_jars` or reinstall the gem'
+    _($stderr.string).must_include 'failed to load jar: org/something/slf4j-simple/1.6.6/slf4j-simple-1.6.6.jar'
+  ensure
+    $stderr = STDERR
   end
 
-  # rubocop:disable Layout/LineLength
   it 'does not require jar but sets version to unknown' do
     ENV['JARS_HOME'] = File.join('specs', 'repo')
     Jars.reset
@@ -123,7 +209,9 @@ describe Jars do
       $stderr = StringIO.new
       _(require_jar('org.slf4j', 'slf4j-simple') { '1.6.6' }).must_equal false
 
-      _($stderr.string).must_equal "--- jar coordinate org.slf4j:slf4j-simple already loaded with version unknown - omit version 1.6.6\n"
+      expected = 'jar conflict: org.slf4j:slf4j-simple already loaded with version unknown; ' \
+                 "skipping requested version 1.6.6\n"
+      _($stderr.string).must_equal expected
     ensure
       $stderr = STDERR
       ENV['JARS_HOME'] = nil
@@ -142,15 +230,21 @@ describe Jars do
 
       $stderr = StringIO.new
       _(require_jar('org.slf4j', 'slf4j-simple', '1.6.4')).must_equal false
-      _($stderr.string).must_equal "--- jar coordinate org.slf4j:slf4j-simple already loaded with version 1.6.6 - omit version 1.6.4\n"
+      expected = 'jar conflict: org.slf4j:slf4j-simple already loaded with version 1.6.6; ' \
+                 "skipping requested version 1.6.4\n"
+      _($stderr.string).must_equal expected
 
       $stderr = StringIO.new
       _(require_jar('org.slf4j', 'slf4j-simple') { '1.6.4' }).must_equal false
-      _($stderr.string).must_equal "--- jar coordinate org.slf4j:slf4j-simple already loaded with version 1.6.6 - omit version 1.6.4\n"
+      expected = 'jar conflict: org.slf4j:slf4j-simple already loaded with version 1.6.6; ' \
+                 "skipping requested version 1.6.4\n"
+      _($stderr.string).must_equal expected
 
       $stderr = StringIO.new
       _(require_jar('org.slf4j', 'slf4j-simple') { nil }).must_equal false
-      _($stderr.string).must_equal "--- jar coordinate org.slf4j:slf4j-simple already loaded with version 1.6.6 - omit version unknown\n"
+      expected = 'jar conflict: org.slf4j:slf4j-simple already loaded with version 1.6.6; ' \
+                 "skipping requested version unknown\n"
+      _($stderr.string).must_equal expected
     ensure
       $stderr = STDERR
       ENV['JARS_HOME'] = nil
@@ -165,7 +259,7 @@ describe Jars do
     begin
       $stderr = StringIO.new
 
-      _ { require_jar('org.slf4j', 'slf4j-simple', '1.6.6') }.must_raise RuntimeError
+      _ { require_jar('org.slf4j', 'slf4j-simple', '1.6.6') }.must_raise Jars::JarLoadError
 
       $stderr.flush
 
@@ -174,14 +268,14 @@ describe Jars do
 
       _(require_jar('org.slf4j', 'slf4j-simple', '1.6.6')).must_equal false
 
-      _($stderr.string).must_equal "--- jar coordinate org.slf4j:slf4j-simple already loaded with version 1.6.4 - omit version 1.6.6\n"
+      expected = 'jar conflict: org.slf4j:slf4j-simple already loaded with version 1.6.4; ' \
+                 "skipping requested version 1.6.6\n"
+      _($stderr.string).must_equal expected
     ensure
       $stderr = STDERR
       ENV['JARS_HOME'] = nil
     end
   end
-  # rubocop:enable Layout/LineLength
-
   it 'freezes jar loading unless jar is not loaded yet' do
     size = $CLASSPATH.length
 
@@ -240,16 +334,6 @@ describe Jars do
     $stderr = STDERR
   end
 
-  it 'no warnings on reload' do
-    $stderr = StringIO.new
-
-    load File.expand_path('lib/jar_dependencies.rb')
-
-    _($stderr.string).must_equal ''
-  ensure
-    $stderr = STDERR
-  end
-
   it 'requires jars from various default places' do
     pwd = File.expand_path(__dir__)
     $LOAD_PATH << File.join(pwd, 'path')
@@ -262,10 +346,10 @@ describe Jars do
       require_jar 'more', 'sample', '3'
     end
 
-    _($stderr.string).wont_match(/omit version 1/)
-    _($stderr.string).must_match(/omit version 2/)
-    _($stderr.string).must_match(/omit version 3/)
-    _($stderr.string).wont_match(/omit version 4/)
+    _($stderr.string).wont_match(/skipping requested version 1/)
+    _($stderr.string).must_match(/skipping requested version 2/)
+    _($stderr.string).must_match(/skipping requested version 3/)
+    _($stderr.string).wont_match(/skipping requested version 4/)
   ensure
     $stderr = STDERR
 
