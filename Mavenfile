@@ -12,7 +12,7 @@ properties('jruby.versions' => ['${jruby.version}'].join(','),
            # just lock the version
            'bundler.version' => '2.5.11',
            'jruby.version' => '9.4.8.0',
-           'jruby.plugins.version' => '3.0.2',
+           'jruby.plugins.version' => '3.0.6',
            'push.skip' => true)
 
 plugin :invoker, '1.8' do
