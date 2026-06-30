@@ -6,21 +6,11 @@ plugin_repository id: :mavengems, url: 'mavengem:https://rubygems.org'
 
 jruby_plugin(:minitest, minispecDirectory: 'specs/*_spec.rb') do
   execute_goals(:spec)
-  gem 'ruby-maven', '${ruby-maven.version}'
-end
-
-# retrieve the ruby-maven version
-gemfile_profile = @model.profiles.detect do |p|
-  p.id.to_sym == :gemfile
-end || @model
-ruby_maven = gemfile_profile.dependencies.detect do |d|
-  d.artifact_id == 'ruby-maven'
 end
 
 properties('jruby.versions' => ['${jruby.version}'].join(','),
            # just lock the version
            'bundler.version' => '2.5.11',
-           'ruby-maven.version' => ruby_maven.version,
            'jruby.version' => '9.4.8.0',
            'jruby.plugins.version' => '3.0.2',
            'push.skip' => true)
@@ -38,8 +28,7 @@ plugin :invoker, '1.8' do
                               # use an old jruby with old ruby-maven here
                               'jruby.version' => '${jruby.version}',
                               'jruby.plugins.version' => '${jruby.plugins.version}',
-                              'bundler.version' => '${bundler.version}',
-                              'ruby-maven.version' => '${ruby-maven.version}' })
+                              'bundler.version' => '${bundler.version}', })
 end
 
 distribution_management do

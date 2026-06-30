@@ -41,7 +41,6 @@ properties('gem.home' => '${project.basedir}/../rubygems',
 jar 'org.jruby:jruby-complete', '${jruby.version}'
 
 gem 'jar-dependencies', '${jar-dependencies.version}'
-gem 'ruby-maven', '${ruby-maven.version}'
 
 jruby_plugin :gem, '${jruby.plugins.version}' do
   execute_goal :initialize
