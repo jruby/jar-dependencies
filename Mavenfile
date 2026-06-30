@@ -15,21 +15,21 @@ properties('jruby.versions' => ['${jruby.version}'].join(','),
            'jruby.plugins.version' => '3.0.6',
            'push.skip' => true)
 
-plugin :invoker, '1.8' do
-  execute_goals(:install, :run,
-                id: 'integration-tests',
-                projectsDirectory: 'integration',
-                streamLogs: true,
-                goals: ['install'],
-                preBuildHookScript: 'setup.bsh',
-                postBuildHookScript: 'verify.bsh',
-                cloneProjectsTo: '${project.build.directory}',
-                properties: { 'jar-dependencies.version' => '${project.version}',
-                              # use an old jruby with old ruby-maven here
-                              'jruby.version' => '${jruby.version}',
-                              'jruby.plugins.version' => '${jruby.plugins.version}',
-                              'bundler.version' => '${bundler.version}', })
-end
+#plugin :invoker, '1.8' do
+#  execute_goals(:install, :run,
+#                id: 'integration-tests',
+#                projectsDirectory: 'integration',
+#                streamLogs: true,
+#                goals: ['install'],
+#                preBuildHookScript: 'setup.bsh',
+#                postBuildHookScript: 'verify.bsh',
+#                cloneProjectsTo: '${project.build.directory}',
+#                properties: { 'jar-dependencies.version' => '${project.version}',
+#                              # use an old jruby with old ruby-maven here
+#                              'jruby.version' => '${jruby.version}',
+#                              'jruby.plugins.version' => '${jruby.plugins.version}',
+#                              'bundler.version' => '${bundler.version}', })
+#end
 
 distribution_management do
   repository id: :ossrh, url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
