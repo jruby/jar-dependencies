@@ -175,18 +175,15 @@ module Jars
     end
 
     def jars?
-      # first look if there are any requirements in the spec
-      # and then if gem depends on jar-dependencies for runtime.
-      # only then install the jars declared in the requirements
       spec = self.spec
-      result = spec && !spec.requirements.empty? &&
-               spec.dependencies.detect { |d| d.name == 'jar-dependencies' && d.type == :runtime }
-      if result && spec.platform.to_s != 'java'
-        Jars.warn "jar-dependencies found on non-java platform gem; skipping jar installation"
-        false
-      else
-        result
-      end
+      return if spec.nil? # rubocop:disable Style/ReturnNilInPredicateMethodDefinition
+      return false unless spec.requirements&.any?
+      return false unless spec.runtime_dependencies.find { |s| s.name == 'jar-dependencies' }
+
+      return true if spec.platform.to_s == 'java'
+
+      Jars.warn "jar-dependencies found on non-java platform gem; skipping jar installation"
+      nil # rubocop:disable Style/ReturnNilInPredicateMethodDefinition
     end
 
     private
