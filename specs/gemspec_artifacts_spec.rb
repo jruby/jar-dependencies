@@ -56,140 +56,140 @@ end
 
 describe Jars::GemspecArtifacts::Artifact do
   it 'ignore unknow type' do
-    _(Jars::GemspecArtifacts::Artifact.new('bla')).must_be_nil
-    _(Jars::GemspecArtifacts::Artifact.new(' _(bla')).must_be_nil
-    _(Jars::GemspecArtifacts::Artifact.new('bla bla _(bla')).must_be_nil
+    _(Jars::GemspecArtifacts::Artifact.parse('bla')).must_be_nil
+    _(Jars::GemspecArtifacts::Artifact.parse(' _(bla')).must_be_nil
+    _(Jars::GemspecArtifacts::Artifact.parse('bla bla _(bla')).must_be_nil
   end
 
   %i[jar pom].each do |type|
     it "parse and to_s of simple GAV #{type}" do
       expected = "#{type} g:a, 1"
-      a = Jars::GemspecArtifacts::Artifact.new(expected)
+      a = Jars::GemspecArtifacts::Artifact.parse(expected)
       _(a.to_s).must_equal expected
       line = "#{type} 'g:a', '1'"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
       line = "#{type} g,a,1"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
       line = "#{type} 'g',\"a\", 1"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
       line = "#{type} g:a:1"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
       line = "#{type} 'g:a:1'"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
     end
 
     it "parse and to_s of simple GAV #{type} with range" do
       expected = "#{type} g:a, [1, 2)"
-      a = Jars::GemspecArtifacts::Artifact.new(expected)
+      a = Jars::GemspecArtifacts::Artifact.parse(expected)
       _(a.to_s).must_equal expected
       line = "#{type} g:a:[1, 2)"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
       line = "#{type} g:a,'[1, 2)'"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
       line = "#{type} 'g', \"a\", ' [1, 2) '"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
     end
 
     it "parse and to_s of simple GAV #{type} with one exclusion" do
       expected = "#{type} g:a, 1, [a:b]"
-      a = Jars::GemspecArtifacts::Artifact.new(expected)
+      a = Jars::GemspecArtifacts::Artifact.parse(expected)
       _(a.to_s).must_equal expected
       line = "#{type} 'g:a', '1', '[a:b]'"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
       line = "#{type} 'g:a', '1', ['a:b']"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
       line = "#{type} g,a,1,[a:b]"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
     end
 
     it "parse and to_s of simple GAV #{type} with exclusions" do
       expected = "#{type} g:a, 1, [a:b, c:d]"
-      a = Jars::GemspecArtifacts::Artifact.new(expected)
+      a = Jars::GemspecArtifacts::Artifact.parse(expected)
       _(a.to_s).must_equal expected
       line = "#{type} 'g:a', '1', ['a:b', 'c:d']'"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
       line = "#{type} g,a,1,[a:b,c:d]"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
     end
 
     it "parse and to_s of simple GAV #{type} with exclusions and range" do
       expected = "#{type} g:a, (1, 2], [a:b, c:d]"
-      a = Jars::GemspecArtifacts::Artifact.new(expected)
+      a = Jars::GemspecArtifacts::Artifact.parse(expected)
       _(a.to_s).must_equal expected
       line = "#{type} 'g:a', '(1,2]', ['a:b', 'c:d']'"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
       line = "#{type} g,a,(1,2],[a:b,c:d]"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
       line = "#{type} g,a,(1,2],  :exclusions : [a:b,c:d]"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
     end
 
     it "parse and to_s of simple GACV #{type}" do
       expected = "#{type} g:a, c, 1"
-      a = Jars::GemspecArtifacts::Artifact.new(expected)
+      a = Jars::GemspecArtifacts::Artifact.parse(expected)
       _(a.to_s).must_equal expected
       line = "#{type} 'g:a', 'c', '1'"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
       line = "#{type} g,a,\"c\",1"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
       line = "#{type}  g,a, 1  ,:classifier : c"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
     end
 
     it "parse and to_s of simple GACV #{type} with range" do
       expected = "#{type} g:a, c, [1, 2)"
-      a = Jars::GemspecArtifacts::Artifact.new(expected)
+      a = Jars::GemspecArtifacts::Artifact.parse(expected)
       _(a.to_s).must_equal expected
       _(a.scope).must_be_nil
       line = "#{type} g:a:c:[1, 2),:scope=>:runtime"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
       _(a.scope).must_equal 'runtime'
       line = "#{type} g:a:c,'[1, 2)'"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
       line = "#{type} 'g', \"a\", 'c', ' [1, 2) '"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
       line = "#{type}  g,a,[1,  2),:classifier => c"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
     end
 
     it "parse and to_s of simple GACV #{type} with exclusions and range" do
       expected = "#{type} g:a, c, (1, 2], [a:b, c:d]"
-      a = Jars::GemspecArtifacts::Artifact.new(expected)
+      a = Jars::GemspecArtifacts::Artifact.parse(expected)
       _(a.to_s).must_equal expected
       _(a.scope).must_be_nil
       line = "#{type} 'g:a:c', '(1,2]', ['a:b', 'c:d']'"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
       _(a.scope).must_be_nil
       line = "#{type} g,a,c,(1,2],[a:b,c:d], :scope => :compile"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
       _(a.scope).must_equal 'compile'
       line = "#{type}  g,a,(1,2],:classifier => c,:exclusions => [a:b,c:d]"
-      a = Jars::GemspecArtifacts::Artifact.new(line)
+      a = Jars::GemspecArtifacts::Artifact.parse(line)
       _(a.to_s).must_equal expected
     end
   end
@@ -230,7 +230,7 @@ describe Jars::GemspecArtifacts do
     _(artifacts[5].exclusions).must_be_nil
 
     artifacts.each do |a|
-      _(a.to_s).must_equal Jars::GemspecArtifacts::Artifact.new(a.to_s).to_s
+      _(a.to_s).must_equal Jars::GemspecArtifacts::Artifact.parse(a.to_s).to_s
     end
 
     _(artifacts.size).must_equal 7

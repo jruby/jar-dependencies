@@ -251,7 +251,7 @@ module Jars
       # @param artifact [Jars::GemspecArtifacts::Artifact]
       # @return [org.eclipse.aether.artifact.DefaultArtifact]
       def build_aether_artifact(artifact)
-        version = Jars::MavenVersion.new(artifact.version) || artifact.version
+        version = Jars::MavenVersion.resolve(artifact.version) || artifact.version
         if artifact.classifier
           org.eclipse.aether.artifact.DefaultArtifact.new(
             artifact.group_id, artifact.artifact_id, artifact.classifier,

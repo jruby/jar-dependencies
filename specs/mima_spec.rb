@@ -28,7 +28,7 @@ describe Jars::Mima do
     ENV['JARS_DEBUG'] = 'true'
     $stderr = StringIO.new
 
-    artifact = Jars::GemspecArtifacts::Artifact.new('jar org.example:example, 1.0')
+    artifact = Jars::GemspecArtifacts::Artifact.parse('jar org.example:example, 1.0')
     begin
       Jars::Mima.resolve_artifacts([ artifact ])
     rescue org.eclipse.aether.resolution.DependencyResolutionException

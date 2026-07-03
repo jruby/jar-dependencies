@@ -1,20 +1,14 @@
 # frozen_string_literal: true
 
 module Jars
-  class MavenVersion < String
+  module MavenVersion
     class << self
-      def new(*args)
-        if args.empty? || (args.size == 1 && args[0].nil?)
-          nil
-        else
-          low, high = convert(args[0])
-          low, high = convert(args[1], low, high) if /[=~><]/.match?(args[1])
-          if low == high
-            low
-          else
-            super("#{low || '[0'},#{high || ')'}")
-          end
-        end
+      def resolve(*args)
+        return nil if args.empty? || (args.size == 1 && args[0].nil?)
+
+        low, high = convert(args[0])
+        low, high = convert(args[1], low, high) if /[=~><]/.match?(args[1])
+        (low == high) ? low : "#{low || '[0'},#{high || ')'}"
       end
 
       private
@@ -94,14 +88,19 @@ module Jars
 
       ALLOWED_TYPES = %w[jar pom].freeze
 
-      def initialize(options, *args)
-        @type, @group_id, @artifact_id, @classifier, @version, @exclusions = *args
+      def initialize(type, group_id, artifact_id, classifier, version, exclusions, **options)
+        @type = type
+        @group_id = group_id
+        @artifact_id = artifact_id
+        @classifier = classifier
+        @version = version
+        @exclusions = exclusions
         options.each do |k, v|
           instance_variable_set(:"@#{k}", v)
         end
       end
 
-      def self.new(line)
+      def self.parse(line)
         line = line.strip
         index = line.index(/\s/)
         return nil if index.nil?
@@ -151,7 +150,7 @@ module Jars
           warn line
           return nil
         end
-        super(options, type, group_id, artifact_id, classifier, version, exclusions)
+        new(type, group_id, artifact_id, classifier, version, exclusions, **options)
       end
 
       def to_s
@@ -169,18 +168,11 @@ module Jars
         args.join(':')
       end
 
-      def to_coord_no_classifier
+      def to_coord(classifier: true)
         args = [@group_id, @artifact_id]
+        args << @classifier if classifier && @classifier
         args << @type
-        args << MavenVersion.new(@version)
-        args.join(':')
-      end
-
-      def to_coord
-        args = [@group_id, @artifact_id]
-        args << @classifier if @classifier
-        args << @type
-        args << MavenVersion.new(@version)
+        args << MavenVersion.resolve(@version)
         args.join(':')
       end
 
@@ -197,9 +189,8 @@ module Jars
       @artifacts = []
       spec.requirements.each do |req|
         req.split("\n").each do |line|
-          if (a = Artifact.new(line))
-            @artifacts << a
-          end
+          artifact = Artifact.parse(line)
+          @artifacts << artifact if artifact
         end
       end
       @artifacts.freeze
