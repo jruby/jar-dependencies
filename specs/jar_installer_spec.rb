@@ -60,10 +60,8 @@ describe Jars::Installer do
   it 'just skips install_jars and vendor_jars if there are no requirements' do
     jar = Jars::Installer.new
     jar.install_jars
-    # vendor method is a mocked method
-    _(jar.vendor).must_be_nil
+    _(jar.vendor).must_be_nil # vendor method is a mocked method
     jar.vendor_jars
-    # vendor method is a mocked method
     _(jar.vendor).must_be_nil
   end
 
@@ -72,30 +70,24 @@ describe Jars::Installer do
     spec.platform = 'ruby'
     jar = Jars::Installer.new(spec)
     jar.install_jars
-    # vendor method is a mocked method
-    _(jar.vendor).must_be_nil
+    _(jar.vendor).must_be_nil # vendor method is a mocked method
     jar.vendor_jars
-    # vendor method is a mocked method
-    _(jar.vendor).must_be_nil
+    _(jar.vendor).must_be_nil # vendor method is a mocked method
   end
 
   it 'does install_jars and vendor_jars' do
     ENV['JARS_VENDOR'] = nil
     jar = Jars::Installer.new(example_spec)
     jar.install_jars
-    # vendor method is a mocked method
-    assert_nil jar.vendor
+    assert_nil jar.vendor # vendor method is a mocked method
     ENV['JARS_VENDOR'] = 'false'
     jar.vendor_jars
-    # vendor method is a mocked method
     assert_nil jar.vendor
     ENV['JARS_VENDOR'] = 'true'
     jar.vendor_jars
-    # vendor method is a mocked method
     _(jar.vendor).must_equal 'lib'
     java.lang.System.set_property('jars.vendor', 'false')
     jar.vendor_jars
-    # vendor method is a mocked method
     assert_nil jar.vendor
   end
 
