@@ -55,8 +55,9 @@ module Jars
   autoload :MavenSettings, 'jars/maven_settings'
   autoload :Mima, 'jars/mima'
 
-  @jars_lock = false
   @jars = {}
+  @jars_lock = false
+  @jars_locked = nil
 
   class JarLoadError < LoadError; end
 
@@ -119,8 +120,13 @@ module Jars
       @quiet
     end
 
+    # @deprecated
     def no_more_warnings
       @quiet = true
+    end
+
+    def locked_jar?(coordinate)
+      @jars_locked&.include?(coordinate)
     end
 
     def jarfile
@@ -177,6 +183,7 @@ module Jars
       end
       Jars::MavenSettings.reset
       @jars = {}
+      @jars_locked = nil
     end
 
     def maven_local_settings
@@ -209,6 +216,7 @@ module Jars
 
     def require_jars_lock!(scope = :runtime)
       urls = jars_lock_from_class_loader if to_prop(LOCK).nil?
+      pre_lock_jars = @jars.keys.dup
       if urls && !urls.empty?
         @jars_lock = true
 
@@ -223,15 +231,19 @@ module Jars
             done << url
           end
         end
-        no_more_warnings
       elsif (jars_lock = Jars.lock_path)
         Jars.debug { "--- load jars from #{jars_lock}" }
         @jars_lock = jars_lock
 
         classpath = Jars::Classpath.new(nil, jars_lock)
         classpath.require(scope)
-        no_more_warnings
       end
+
+      return unless @jars_lock
+
+      @jars_locked = (@jars.keys - pre_lock_jars).freeze
+      return if @jars_locked.empty?
+
       Jars.debug do
         loaded = @jars.collect { |k, v| "#{k}:#{v}" }
         "--- loaded jars ---\n\t#{loaded.join("\n\t")}"
@@ -306,9 +318,8 @@ module Jars
       version = classifier_version[-1]
       classifier = classifier_version[-2]
 
-      coordinate = +"#{group_id}:#{artifact_id}"
-      coordinate << ":#{classifier}" if classifier
-      if @jars.key? coordinate
+      coordinate = "#{group_id}:#{artifact_id}#{":#{classifier}" if classifier}"
+      if @jars.key?(coordinate)
         if @jars[coordinate] == version
           false
         else
@@ -373,11 +384,14 @@ def require_jar(*args, &block)
   return unless Jars.require?
 
   result = Jars.require_jar(*args, &block)
-  if result.is_a? String
+  if result.is_a?(String)
     args << (yield || Jars::UNKNOWN) if args.size == 2 && block
-    Jars.warn do
-      "jar conflict: #{args[0..-2].join(':')} already loaded with version #{result}; " \
-        "skipping requested version #{args[-1]}"
+    coordinate = args[0..-2].join(':')
+    unless Jars.locked_jar?(coordinate)
+      Jars.warn do
+        "jar conflict: #{coordinate} already loaded with version #{result}; " \
+          "skipping requested version #{args[-1]}"
+      end
     end
     Jars.debug("\n\t#{caller.join("\n\t")}") if Jars.debug?
     return false

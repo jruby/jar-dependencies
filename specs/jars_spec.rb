@@ -364,4 +364,37 @@ describe Jars do
     Jars.setup jars_lock: 'Jars_no_jline.lock'
     _(Jars.lock).must_equal 'Jars_no_jline.lock'
   end
+
+  it 'only suppresses version conflict warnings for jars in the lockfile' do
+    lock_file = File.join(Dir.pwd, 'Jars_test_46.lock')
+    File.write(lock_file, "org.slf4j:slf4j-simple:1.6.6:compile:\n")
+    ENV['JARS_HOME'] = File.join('specs', 'repo')
+    ENV['JARS_LOCK'] = lock_file
+    Jars.instance_variable_set(:@jars_lock, false)
+    Jars.reset
+
+    # trigger lock file loading
+    $stderr = StringIO.new
+    require_jar('org.slf4j', 'slf4j-simple', '1.6.6')
+
+    _($stderr.string).must_equal ''
+    assert_nil Jars.quiet?
+    # verify only the lock jar is tracked
+    _(Jars.locked_jar?('org.slf4j:slf4j-simple')).must_equal true
+    _(Jars.locked_jar?('some:other')).must_equal false
+
+    require 'jopenssl/version'
+    # verify conflict for a lock jar is suppressed
+    require_jar('org.slf4j', 'slf4j-simple', '1.7.4')
+    _($stderr.string).must_equal ''
+    require_jar('org.bouncycastle', 'bcpkix-jdk18on', JOpenSSL::BOUNCY_CASTLE_VERSION)
+    require_jar('org.bouncycastle', 'bcpkix-jdk18on', '1.42')
+    # warn still happens for non-lock jars
+    _($stderr.string).must_match 'jar conflict: org.bouncycastle:bcpkix-jdk18on already loaded'
+  ensure
+    $stderr = STDERR
+    FileUtils.rm_rf(lock_file) if lock_file
+    ENV['JARS_HOME'] = nil
+    ENV['JARS_LOCK'] = nil
+  end
 end
