@@ -56,21 +56,25 @@ module Jars
       @spec = spec
     end
 
-    def resolve_dependencies_list(file)
+    def resolve_dependencies
       require 'jars/mima'
 
       artifacts = GemspecArtifacts.new(@spec)
       is_local_file = File.expand_path(File.dirname(@specfile)) == File.expand_path(Dir.pwd)
 
-      resolved = Jars::Mima.resolve_artifacts(artifacts.artifacts, all_dependencies: is_local_file)
+      Jars::Mima.resolve_artifacts(artifacts.artifacts, all_dependencies: is_local_file)
+    end
+
+    RESOLVED_TYPES = %w[jar pom].freeze
+
+    def resolve_dependencies_list(file)
+      resolved = resolve_dependencies
 
       # Write output in Maven dependency:list format for Installer::Dependency compatibility
-      allowed_types = %w[jar pom].freeze
       File.open(file, 'w') do |f|
-        f.puts
         f.puts 'The following files have been resolved:'
         resolved.each do |dep|
-          next unless allowed_types.include?(dep.type)
+          next unless RESOLVED_TYPES.include?(dep.type)
 
           line = +"   #{dep.group_id}:#{dep.artifact_id}:#{dep.type}:"
           line << "#{dep.classifier}:" if dep.classifier

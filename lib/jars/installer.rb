@@ -8,58 +8,90 @@ module Jars
     class Dependency
       attr_reader :path, :file, :gav, :scope, :type, :coord
 
-      def self.new(line)
-        super if /:jar:|:pom:/.match?(line)
-      end
+      # @param line [String] Maven dependency:list output line
+      # @return [Dependency, nil]
+      def self.parse(line)
+        return unless /:jar:|:pom:/.match?(line)
 
-      def setup_type(line)
-        if line.index(':pom:')
-          @type = :pom
-        elsif line.index(':jar:')
-          @type = :jar
-        end
-      end
-      private :setup_type
-
-      def setup_scope(line)
-        @scope =
-          case line
-          when /:provided:/
-            :provided
-          when /:test:/
-            :test
-          else
-            :runtime
-          end
-      end
-      private :setup_scope
-
-      REG = /:jar:|:pom:|:test:|:compile:|:runtime:|:provided:|:system:/.freeze
-      EMPTY = ''
-      def initialize(line)
         # remove ANSI escape sequences and module section (https://issues.apache.org/jira/browse/MDEP-974)
         line = line.gsub(/\e\[\d*m/, '')
         line = line.gsub(/ -- module.*/, '')
 
-        setup_type(line)
+        type = if line.index(':pom:')
+                 :pom
+               elsif line.index(':jar:')
+                 :jar
+               end
 
         line.strip!
 
-        @coord = line.sub(/:[^:]+:([A-Z]:\\)?[^:]+$/, EMPTY)
-        first, second = @coord.split(/:#{type}:/)
+        all_types = /:jar:|:pom:|:test:|:compile:|:runtime:|:provided:|:system:/
+        coord = line.sub(/:[^:]+:([A-Z]:\\)?[^:]+$/, '')
+        first, second = coord.split(/:#{type}:/)
         group_id, artifact_id = first.split(':')
         parts = group_id.split('.')
         parts << artifact_id
         parts << second.split(':')[-1]
-        @file = line.slice(@coord.length, line.length).sub(REG, EMPTY).strip
-        last = @file.reverse.index(%r{\\|/})
+        file = line.slice(coord.length, line.length).sub(all_types, '').strip
+        last = file.reverse.index(%r{\\|/})
         parts << line[-last..]
-        @path = File.join(parts).strip
+        path = File.join(parts).strip
 
-        setup_scope(line)
+        scope = case line
+                when /:provided:/
+                  :provided
+                when /:test:/
+                  :test
+                else
+                  :runtime
+                end
 
-        @system = !line.index(':system:').nil?
-        @gav = @coord.sub(REG, ':')
+        new(
+          path: path,
+          file: file,
+          gav: coord.sub(all_types, ':'),
+          scope: scope,
+          type: type,
+          coord: coord,
+          system: !line.index(':system:').nil?
+        )
+      end
+
+      # @param dep [Jars::Mima::ResolvedDependency]
+      # @return [Dependency]
+      def self.from_resolved(dep)
+        coord = "#{dep.group_id}:#{dep.artifact_id}:#{dep.type}:"
+        coord << "#{dep.classifier}:" if dep.classifier
+        coord << "#{dep.version}:#{dep.scope}"
+
+        scope = case dep.scope
+                when 'test'
+                  :test
+                when 'provided'
+                  :provided
+                else
+                  :runtime
+                end
+
+        new(
+          path: dep.path,
+          file: dep.file,
+          gav: dep.gav,
+          scope: scope,
+          type: dep.type.to_sym,
+          coord: coord,
+          system: dep.system?
+        )
+      end
+
+      def initialize(path:, file:, gav:, scope:, type:, coord:, system: false)
+        @path = path
+        @file = file
+        @gav = gav
+        @scope = scope
+        @type = type
+        @coord = coord
+        @system = system
       end
 
       def system?
@@ -74,10 +106,19 @@ module Jars
     def self.load_from_maven(file)
       result = []
       File.read(file).each_line do |line|
-        dep = Dependency.new(line)
+        dep = Dependency.parse(line)
         result << dep if dep && dep.scope == :runtime
       end
       result
+    end
+
+    def self.load_from_resolved(resolved)
+      resolved.each_with_object([]) do |mima_dep, result|
+        next unless MavenExec::RESOLVED_TYPES.include?(mima_dep.type)
+
+        dep = Dependency.from_resolved(mima_dep)
+        result << dep if dep.scope == :runtime
+      end
     end
 
     def self.vendor_file(dir, dep)
@@ -211,14 +252,8 @@ module Jars
     end
 
     def install_dependencies
-      deps = File.join(@mvn.basedir, 'deps.lst')
-
       puts "  jar dependencies for #{spec.spec_name} . . ." unless Jars.quiet?
-      @mvn.resolve_dependencies_list(deps)
-
-      self.class.load_from_maven(deps)
-    ensure
-      FileUtils.rm_f(deps) if deps
+      self.class.load_from_resolved(@mvn.resolve_dependencies)
     end
   end
 end
