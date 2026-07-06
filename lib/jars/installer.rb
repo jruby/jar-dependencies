@@ -6,23 +6,36 @@ require 'jars/maven_exec'
 module Jars
   class Installer
     class Dependency
-      attr_reader :path, :file, :gav, :scope, :type, :coord
+      REG = /:jar:|:pom:|:test:|:compile:|:runtime:|:provided:|:system:/.freeze
+      EMPTY = ""
 
-      def self.new(line)
-        super if /:jar:|:pom:/.match?(line)
-      end
+      def self.parse(line)
+        return unless /:jar:|:pom:/.match?(line)
 
-      def setup_type(line)
+        line = line.dup
+        # remove ANSI escape sequences and module section (https://issues.apache.org/jira/browse/MDEP-974)
+        line.gsub!(/\e\[\d*m/, EMPTY)
+        line.gsub!(/ -- module.*/, EMPTY)
+        line.strip!
+
         if line.index(':pom:')
-          @type = :pom
+          type = :pom
         elsif line.index(':jar:')
-          @type = :jar
+          type = :jar
         end
-      end
-      private :setup_type
 
-      def setup_scope(line)
-        @scope =
+        coord = line.sub(/:[^:]+:([A-Z]:\\)?[^:]+$/, EMPTY)
+        first, second = coord.split(/:#{type}:/)
+        group_id, artifact_id = first.split(':')
+        parts = group_id.split('.')
+        parts << artifact_id
+        parts << second.split(':')[-1]
+        file = line.slice(coord.length, line.length).sub(REG, EMPTY).strip
+        last = file.reverse.index(%r{\\|/})
+        parts << line[-last..]
+        path = File.join(parts).strip
+
+        scope =
           case line
           when /:provided:/
             :provided
@@ -31,34 +44,20 @@ module Jars
           else
             :runtime
           end
+
+        new(type, scope, coord, file, path, !line.index(':system:').nil?)
       end
-      private :setup_scope
 
-      REG = /:jar:|:pom:|:test:|:compile:|:runtime:|:provided:|:system:/.freeze
-      EMPTY = ''
-      def initialize(line)
-        # remove ANSI escape sequences and module section (https://issues.apache.org/jira/browse/MDEP-974)
-        line = line.gsub(/\e\[\d*m/, '')
-        line = line.gsub(/ -- module.*/, '')
+      attr_reader :path, :file, :gav, :scope, :type, :coord
 
-        setup_type(line)
+      def initialize(type, scope, coord, file, path, system)
+        @type = type
+        @scope = scope
+        @coord = coord
+        @file = file
+        @path = path
 
-        line.strip!
-
-        @coord = line.sub(/:[^:]+:([A-Z]:\\)?[^:]+$/, EMPTY)
-        first, second = @coord.split(/:#{type}:/)
-        group_id, artifact_id = first.split(':')
-        parts = group_id.split('.')
-        parts << artifact_id
-        parts << second.split(':')[-1]
-        @file = line.slice(@coord.length, line.length).sub(REG, EMPTY).strip
-        last = @file.reverse.index(%r{\\|/})
-        parts << line[-last..]
-        @path = File.join(parts).strip
-
-        setup_scope(line)
-
-        @system = !line.index(':system:').nil?
+        @system = system
         @gav = @coord.sub(REG, ':')
       end
 
@@ -74,7 +73,7 @@ module Jars
     def self.load_from_maven(file)
       result = []
       File.read(file).each_line do |line|
-        dep = Dependency.new(line)
+        dep = Dependency.parse(line)
         result << dep if dep && dep.scope == :runtime
       end
       result
@@ -103,12 +102,11 @@ module Jars
     end
 
     COMMENT = '# this is a generated file, to avoid over-writing it just delete this comment'
-    def self.needs_to_write?(require_filename)
-      require_filename && (!File.exist?(require_filename) || File.read(require_filename).match(COMMENT))
-    end
 
     def self.write_require_jars(deps, require_filename)
-      return unless needs_to_write?(require_filename)
+      return if !require_filename || (
+        File.exist?(require_filename) && !File.read(require_filename).index(COMMENT)
+      )
 
       FileUtils.mkdir_p(File.dirname(require_filename))
       File.open(require_filename, 'w') do |f|
