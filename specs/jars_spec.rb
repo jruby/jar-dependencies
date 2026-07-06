@@ -1,12 +1,13 @@
 # frozen_string_literal: true
 
 require File.expand_path('setup', File.dirname(__FILE__))
+require 'minitest/mock'
 
 require 'stringio'
+
 describe Jars do
   before do
-    @env = ENV.to_h
-    # helpful when debugging
+    @env = ENV.to_h # helpful when debugging
     Jars.reset
   end
 
@@ -122,7 +123,7 @@ describe Jars do
     Jars.reset
 
     fake = Object.new
-    def fake.lock_down(_vendor_dir = nil, **_kwargs)
+    def fake.lock_down(...)
       [Jars.debug?, Jars.verbose?, ENV['JARS_SKIP_LOCK']]
     end
 

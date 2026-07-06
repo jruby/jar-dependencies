@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
 
   s.files = Dir['{lib}/**/*'] + %w[Mavenfile Rakefile Readme.md jar-dependencies.gemspec MIT-LICENSE]
   # explicitly require the jars
-  s.files += Jars::Mima::JARS.each_key.map {File.join(Jars::Mima::MIMA_DIR, _1)}
+  s.files += Jars::Mima::JARS.each_key.map { File.join(Jars::Mima::MIMA_DIR, _1) }
 
   s.description = <<~TEXT
     manage jar dependencies for gems and keep track which jar was already
@@ -31,8 +31,6 @@ Gem::Specification.new do |s|
   TEXT
 
   s.required_ruby_version = '>= 2.6'
-
-  s.add_development_dependency 'minitest', '~> 5.10'
 
   s.metadata['rubygems_mfa_required'] = 'true'
 end
