@@ -1,12 +1,17 @@
 # frozen_string_literal: true
 
-require_relative 'lib/jars/version'
-require_relative 'lib/jars/mima/version'
+File.expand_path('lib', File.dirname(__FILE__)).tap do |lib|
+  $LOAD_PATH.unshift lib unless $LOAD_PATH.include?(lib)
+end
+
+require 'jars/version'
+require 'jars/mima/version'
 
 Gem::Specification.new do |s|
   s.name = 'jar-dependencies'
 
   s.version = Jars::VERSION
+  s.platform = 'java'
 
   s.author = 'christian meier'
   s.email = ['mkristian@web.de']
