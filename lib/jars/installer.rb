@@ -208,8 +208,9 @@ module Jars
     def install_dependencies
       deps = File.join(@mvn.basedir, 'deps.lst')
 
-      puts "  jar dependencies for #{spec.spec_name} . . ." unless Jars.quiet?
+      Jars.info("jar dependencies for #{spec.spec_name} ", newline: false)
       @mvn.resolve_dependencies_list(deps)
+      Jars.info("") # newline after progress dots
 
       self.class.load_from_maven(deps)
     ensure

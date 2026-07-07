@@ -132,18 +132,22 @@ module Jars
           when :metadataInvalid
             Jars.debug { "[mima] invalid metadata #{metadata_label(event.getMetadata)}" }
           when :artifactResolving
+            progress_dot
             Jars.debug { "[mima] resolving artifact #{artifact_label(event.getArtifact)}" }
           when :artifactResolved
             Jars.debug { resolved_message('artifact', event) }
           when :metadataResolving
+            progress_dot
             Jars.debug { "[mima] resolving metadata #{metadata_label(event.getMetadata)}" }
           when :metadataResolved
             Jars.debug { resolved_message('metadata', event) }
           when :artifactDownloading
+            progress_dot
             Jars.debug { download_message('artifact', event) }
           when :artifactDownloaded
             Jars.debug { downloaded_message('artifact', event) }
           when :metadataDownloading
+            progress_dot
             Jars.debug { download_message('metadata', event) }
           when :metadataDownloaded
             Jars.debug { downloaded_message('metadata', event) }
@@ -166,6 +170,11 @@ module Jars
             Jars.debug { transfer_message('failed', event) }
           end
         end
+      end
+
+      # Emits a single progress dot (no newline) unless in debug mode
+      def progress_dot
+        Jars.info('.', newline: false) unless Jars.debug?
       end
 
       def resolved_message(kind, event)

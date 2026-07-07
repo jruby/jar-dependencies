@@ -287,6 +287,13 @@ module Jars
       end
     end
 
+    def info(msg = nil, newline: true)
+      return if quiet?
+
+      msg = yield if msg.nil? && block_given?
+      Kernel.print("#{msg}#{"\n" if newline}")
+    end
+
     def warn(msg = nil)
       return if quiet? && !debug?
 
