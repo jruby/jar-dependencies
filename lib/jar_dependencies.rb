@@ -396,6 +396,6 @@ def require_jar(*args, &block)
     Jars.debug("\n\t#{caller.join("\n\t")}") if Jars.debug?
     return false
   end
-  Jars.debug { "jar registration: #{args.inspect}; loaded=#{result == true}" }
+  Jars.debug { "jar registration: #{args.inspect}; loaded=#{result}" }
   result
 end
