@@ -30,7 +30,7 @@ describe Jars::Mima do
 
     artifact = Jars::GemspecArtifacts::Artifact.parse('jar org.example:example, 1.0')
     begin
-      Jars::Mima.resolve_artifacts([ artifact ])
+      Jars::Mima.resolve_artifacts([artifact])
     rescue org.eclipse.aether.resolution.DependencyResolutionException
       # expected
     end
