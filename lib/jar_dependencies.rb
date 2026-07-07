@@ -357,8 +357,8 @@ module Jars
       file
     end
 
-    def do_require(*args)
-      jar = to_jar(*args)
+    def do_require(group_id, artifact_id, version, classifier)
+      jar = to_jar(group_id, artifact_id, version, classifier)
       # use jar from PWD/vendor/jars if exists
       if File.exist?(vendor = File.join(Dir.pwd, 'vendor', 'jars', jar))
         require vendor
