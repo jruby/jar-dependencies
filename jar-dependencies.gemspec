@@ -1,12 +1,17 @@
 # frozen_string_literal: true
 
-require_relative 'lib/jars/version'
-require_relative 'lib/jars/mima/version'
+File.expand_path('lib', File.dirname(__FILE__)).tap do |lib|
+  $LOAD_PATH.unshift lib unless $LOAD_PATH.include?(lib)
+end
+
+require 'jars/version'
+require 'jars/mima/version'
 
 Gem::Specification.new do |s|
   s.name = 'jar-dependencies'
 
   s.version = Jars::VERSION
+  s.platform = 'java'
 
   s.author = 'christian meier'
   s.email = ['mkristian@web.de']
@@ -20,7 +25,7 @@ Gem::Specification.new do |s|
 
   s.files = Dir['{lib}/**/*'] + %w[Mavenfile Rakefile Readme.md jar-dependencies.gemspec MIT-LICENSE]
   # explicitly require the jars
-  s.files += Jars::Mima::JARS.each_key.map {File.join(Jars::Mima::MIMA_DIR, _1)}
+  s.files += Jars::Mima::JARS.each_key.map { File.join(Jars::Mima::MIMA_DIR, _1) }
 
   s.description = <<~TEXT
     manage jar dependencies for gems and keep track which jar was already
@@ -31,8 +36,6 @@ Gem::Specification.new do |s|
   TEXT
 
   s.required_ruby_version = '>= 2.6'
-
-  s.add_development_dependency 'minitest', '~> 5.10'
 
   s.metadata['rubygems_mfa_required'] = 'true'
 end

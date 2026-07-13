@@ -4,7 +4,7 @@ source 'https://gem.coop'
 
 gemspec
 
-group :development do 
+group :development do
   gem 'rake', require: false
   gem 'ruby-debug', '~> 0.11', require: false
 
@@ -12,4 +12,9 @@ group :development do
   gem 'rubocop-minitest', require: false
   gem 'rubocop-performance', require: false
   gem 'rubocop-rake', require: false
+end
+
+group :test do
+  gem 'minitest', '~> 5.27'
+  gem 'minitest-mock', '~> 5.27'
 end

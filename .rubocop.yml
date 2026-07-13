@@ -3,9 +3,17 @@ plugins:
   - rubocop-performance
   - rubocop-minitest
 
+inherit_mode:
+  merge:
+    - Exclude
+
 AllCops:
   TargetRubyVersion: 2.6
   NewCops: enable
+  Exclude:
+    - target/**/*
+    - vendor/**/*
+    - tmp/**/*
 
 Metrics:
   Enabled: false

@@ -48,7 +48,7 @@ task :download_jars do
 
     puts "  downloading #{filename}..."
     URI.open(info[:url]) do |remote| # rubocop:disable Security/Open
-      File.open(target, 'wb') { |f| f.write(remote.read) }
+      File.binwrite(target, remote.read)
     end
     verify_checksum(target, info[:sha1])
     puts "  saved: #{target}"
@@ -60,7 +60,7 @@ def verify_checksum(path, expected_sha1)
   return if actual == expected_sha1
 
   File.delete(path)
-  raise "SHA-1 mismatch for #{path}:\n" \
-        "  expected: #{expected_sha1}\n" \
-        "  actual:   #{actual}"
+  raise "SHA-1 mismatch for #{path}:\n  " \
+        "expected: #{expected_sha1}\n  " \
+        "actual:   #{actual}"
 end
