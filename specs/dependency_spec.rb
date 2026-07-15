@@ -60,6 +60,27 @@ describe Jars::Installer::Dependency do
     _(dep.file).must_equal '/usr/local/repository/org/apache/maven/maven-repository-metadata/3.1.0/maven-repository-metadata-3.1.0.pom'
   end
 
+  it 'should parse dependency where artifact_id is a scope keyword' do
+    %w[runtime compile test provided system].each do |keyword|
+      dep = Jars::Installer::Dependency.parse("   com.dylibso.chicory:#{keyword}:jar:1.7.5:compile:/usr/local/repository/com/dylibso/chicory/#{keyword}/1.7.5/#{keyword}-1.7.5.jar")
+      _(dep.type).must_equal :jar
+      _(dep.scope).must_equal :runtime
+      _(dep.system?).must_equal false
+      _(dep.gav).must_equal "com.dylibso.chicory:#{keyword}:1.7.5"
+      _(dep.coord).must_equal "com.dylibso.chicory:#{keyword}:jar:1.7.5"
+      _(dep.path).must_equal "com/dylibso/chicory/#{keyword}/1.7.5/#{keyword}-1.7.5.jar"
+      _(dep.file).must_equal "/usr/local/repository/com/dylibso/chicory/#{keyword}/1.7.5/#{keyword}-1.7.5.jar"
+    end
+  end
+
+  it 'should generate the correct require_jar line when artifact_id is a scope keyword' do
+    require 'stringio'
+    dep = Jars::Installer::Dependency.parse('   com.dylibso.chicory:runtime:jar:1.7.5:compile:/usr/local/repository/com/dylibso/chicory/runtime/1.7.5/runtime-1.7.5.jar')
+    io = StringIO.new
+    Jars::Installer.print_require_jar(io, dep)
+    _(io.string.strip).must_equal "require_jar 'com.dylibso.chicory', 'runtime', '1.7.5'"
+  end
+
   it 'should parse dependency where artifact_id has dots' do
     dep = Jars::Installer::Dependency.parse(+'   org.eclipse.sisu:org.eclipse.sisu.plexus:jar:0.0.0.M2a:compile:/usr/local/repository/org/eclipse/sisu/org.eclipse.sisu.plexus/0.0.0.M2a/org.eclipse.sisu.plexus-0.0.0.M2a.jar')
     _(dep.type).must_equal :jar
