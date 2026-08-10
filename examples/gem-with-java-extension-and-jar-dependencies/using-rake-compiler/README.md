@@ -1,4 +1,4 @@
-# using ruby-maven gem build jar
+# building a gem with jar dependencies
 
 ## setup
 

@@ -8,5 +8,4 @@ gem 'sinatra', '~> 1.4'
 
 group :development do
   gem 'jar-dependencies', '0.3.0'
-  gem 'ruby-maven', '~> 3.9', '>= 3.9.3'
 end

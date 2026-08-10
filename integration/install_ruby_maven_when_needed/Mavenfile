@@ -1,7 +1,0 @@
-# frozen_string_literal: true
-
-id 'jar-dependencies:install-ruby-maven:0'
-
-packaging 'pom'
-
-modules %w[gem verify]

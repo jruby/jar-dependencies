@@ -51,7 +51,5 @@ Gem::Specification.new do |s|
   # needed to compile src/main/java/** into lib/example.jar
   s.add_development_dependency 'rake-compiler', '~> 0.9'
 
-  # avoids to install it on the fly when jar-dependencies needs it
-  s.add_development_dependency 'ruby-maven', '~> 3.9', '>= 3.9.3'
   s.metadata['rubygems_mfa_required'] = 'true'
 end
