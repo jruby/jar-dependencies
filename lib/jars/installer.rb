@@ -6,9 +6,13 @@ require 'jars/maven_exec'
 module Jars
   class Installer
     class Dependency
-      REG = /:jar:|:pom:|:test:|:compile:|:runtime:|:provided:|:system:/.freeze
       EMPTY = ""
+      # the trailing ":<file>" of a dependency line; the file may itself contain
+      # a ':' on Windows (C:\...), hence the optional drive-letter prefix
+      TRAILING_FILE = /:(?<file>(?:[A-Z]:\\)?[^:]+)\z/.freeze
 
+      # A dependency:list line has the form
+      #   groupId:artifactId:type[:classifier]:version:scope:/path/to/file
       def self.parse(line)
         return unless /:jar:|:pom:/.match?(line)
 
@@ -18,47 +22,49 @@ module Jars
         line.gsub!(/ -- module.*/, EMPTY)
         line.strip!
 
-        if line.index(':pom:')
-          type = :pom
-        elsif line.index(':jar:')
-          type = :jar
+        # Peel off the trailing file path first: since it may contain a ':' it
+        # cannot take part in the split below. What is left (pre_match) is
+        # colon-clean, so every field is addressed by position -- never by
+        # matching a keyword, which breaks when an artifact id is itself a scope
+        # or type keyword (e.g. "com.dylibso.chicory:runtime:jar:1.7.5").
+        tail = line.match(TRAILING_FILE)
+        file = tail[:file]
+
+        # classifier is the only optional field, so there are exactly 5 or 6
+        components = tail.pre_match.split(':')
+        if components.size == 6
+          group_id, artifact_id, type, classifier, version, scope_name = components
+        else
+          group_id, artifact_id, type, version, scope_name = components
         end
 
-        coord = line.sub(/:[^:]+:([A-Z]:\\)?[^:]+$/, EMPTY)
-        first, second = coord.split(/:#{type}:/)
-        group_id, artifact_id = first.split(':')
-        parts = group_id.split('.')
-        parts << artifact_id
-        parts << second.split(':')[-1]
-        file = line.slice(coord.length, line.length).sub(REG, EMPTY).strip
-        last = file.reverse.index(%r{\\|/})
-        parts << line[-last..]
-        path = File.join(parts).strip
+        coord = [group_id, artifact_id, type, classifier, version].compact.join(':')
+        gav = [group_id, artifact_id, classifier, version].compact.join(':')
+        path = File.join(*group_id.split('.'), artifact_id, version, file[%r{[^\\/]+\z}])
 
         scope =
-          case line
-          when /:provided:/
+          case scope_name
+          when 'provided'
             :provided
-          when /:test:/
+          when 'test'
             :test
           else
             :runtime
           end
 
-        new(type, scope, coord, file, path, !line.index(':system:').nil?)
+        new(type.to_sym, scope, coord, gav, file, path, scope_name == 'system')
       end
 
       attr_reader :path, :file, :gav, :scope, :type, :coord
 
-      def initialize(type, scope, coord, file, path, system)
+      def initialize(type, scope, coord, gav, file, path, system)
         @type = type
         @scope = scope
         @coord = coord
+        @gav = gav
         @file = file
         @path = path
-
         @system = system
-        @gav = @coord.sub(REG, ':')
       end
 
       def system?
