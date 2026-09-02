@@ -28,7 +28,9 @@ SLF4J_VERSION = Jars::Mima::SLF4J_VERSION
 MIMA_JARS = Jars::Mima::JARS
 MIMA_DIR = Jars::Mima::MIMA_DIR
 
-MIMA_JARS.each_key { |jar| CLEAN.include(File.join(MIMA_DIR, jar)) }
+CLEAN.include(File.join(MIMA_DIR, "*.jar"))
+
+task :build => :download_jars
 
 desc 'download Mima (and dependent SLF4J) jars'
 task :download_jars do
