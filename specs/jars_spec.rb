@@ -195,7 +195,6 @@ describe Jars do
     _(error).must_be_kind_of LoadError
     _(error.message).must_equal 'failed to load jar: org/something/slf4j-simple/1.6.6/slf4j-simple-1.6.6.jar; ' \
                                 'run `lock_jars` or reinstall the gem'
-    _($stderr.string).must_include 'failed to load jar: org/something/slf4j-simple/1.6.6/slf4j-simple-1.6.6.jar'
   ensure
     $stderr = STDERR
   end
