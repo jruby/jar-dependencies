@@ -380,7 +380,6 @@ module Jars
         require jar
       end
     rescue LoadError => e
-      Jars.warn "failed to load jar: #{jar} (#{e.message})"
       Jars.debug(e)
       raise JarLoadError, "failed to load jar: #{jar}; run `lock_jars` or reinstall the gem"
     end
