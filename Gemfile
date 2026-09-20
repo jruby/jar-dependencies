@@ -8,6 +8,7 @@ group :development do
   gem 'rake', require: false
   gem 'ruby-debug', '~> 0.11', require: false
 
+  gem 'rubocop-ast', '1.42.0', require: false
   gem 'rubocop', require: false
   gem 'rubocop-minitest', require: false
   gem 'rubocop-performance', require: false
