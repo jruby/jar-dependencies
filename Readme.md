@@ -220,6 +220,4 @@ With JRuby 9000 it was the right time to get jar dependencies "right".
 
 # Developing
 
-You must have the latest ruby-maven installed in your local JRuby.
-
 ./mvnw install will build the gem and run integration tests
