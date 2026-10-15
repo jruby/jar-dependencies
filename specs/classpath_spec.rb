@@ -3,6 +3,7 @@
 require File.expand_path('setup', File.dirname(__FILE__))
 
 require 'yaml'
+require 'tmpdir'
 
 module Helper
   def self.prepare!(array)
@@ -85,14 +86,14 @@ describe Jars::Classpath do
     ['org/apache/maven/maven-repository-metadata/3.1.0/maven-repository-metadata-3.1.0.jar',
      'com/google/code/findbugs/jsr305/1.3.9/jsr305-1.3.9.jar',
      'org/apache/httpcomponents/httpclient/4.2.3/httpclient-4.2.3.jar',
-     'org/sonatype/sisu/sisu-guice/3.1.0/sisu-guice-no_aop-3.1.0.jar',
+     'org/sonatype/sisu/sisu-guice/3.1.0/sisu-guice-3.1.0-no_aop.jar',
      '${java.home}/../lib/tools.jar',
      'org/sonatype/plexus/plexus-cipher/1.4/plexus-cipher-1.4.jar']
   end
 
   let(:lock_expected_runtime) do
     ['org/apache/maven/maven-repository-metadata/3.1.0/maven-repository-metadata-3.1.0.jar',
-     'org/sonatype/sisu/sisu-guice/3.1.0/sisu-guice-no_aop-3.1.0.jar',
+     'org/sonatype/sisu/sisu-guice/3.1.0/sisu-guice-3.1.0-no_aop.jar',
      '${java.home}/../lib/tools.jar',
      'org/sonatype/plexus/plexus-cipher/1.4/plexus-cipher-1.4.jar']
   end
@@ -101,7 +102,7 @@ describe Jars::Classpath do
     ['org/apache/maven/maven-repository-metadata/3.1.0/maven-repository-metadata-3.1.0.jar',
      'com/google/code/findbugs/jsr305/1.3.9/jsr305-1.3.9.jar',
      'org/apache/httpcomponents/httpclient/4.2.3/httpclient-4.2.3.jar',
-     'org/sonatype/sisu/sisu-guice/3.1.0/sisu-guice-no_aop-3.1.0.jar',
+     'org/sonatype/sisu/sisu-guice/3.1.0/sisu-guice-3.1.0-no_aop.jar',
      '${java.home}/../lib/tools.jar',
      'org/slf4j/slf4j-api/1.6.2/slf4j-api-1.6.2.jar',
      'org/sonatype/plexus/plexus-cipher/1.4/plexus-cipher-1.4.jar']
@@ -205,6 +206,28 @@ describe Jars::Classpath do
     _(Helper.prepare(subject.classpath(:test))).must_equal Helper.prepare(lock_expected_test)
 
     _(Helper.prepare(subject.classpath(:runtime))).must_equal Helper.prepare(lock_expected_runtime)
+  end
+
+  it 'uses Maven classifier paths by default and permits legacy order' do
+    Dir.mktmpdir do |home|
+      lock = File.join(home, 'Jars.lock')
+      File.write(lock, "org.xmlresolver:xmlresolver:data:5.3.3:compile:\n")
+      dir = File.join(home, 'org/xmlresolver/xmlresolver/5.3.3')
+      maven_path = File.join(dir, 'xmlresolver-5.3.3-data.jar')
+      legacy_path = File.join(dir, 'xmlresolver-data-5.3.3.jar')
+
+      Jars.stub(:home, home) do
+        classpath = Jars::Classpath.new(nil, lock)
+        _(classpath.classpath).must_equal [maven_path]
+        _(classpath.classpath(legacy_classifier: true)).must_equal [legacy_path]
+        _(classpath.classpath_string).must_equal maven_path
+
+        explicit_path = File.join(home, 'explicit.jar')
+        File.binwrite(lock, "org.xmlresolver:xmlresolver:data:5.3.3:compile:#{explicit_path}\n")
+        _(classpath.classpath).must_equal [explicit_path]
+        _(classpath.classpath(legacy_classifier: true)).must_equal [explicit_path]
+      end
+    end
   end
 
   it 'processes Jars.lock and block loading of jars' do
