@@ -47,7 +47,7 @@ module Jars
                    else
                      "#{gacv[1..].join('-')}.jar"
                    end
-        File.join(Jars.home, group_id.gsub('.', '/'), artifact_id, version, filename)
+        File.join(Jars.home, group_id.tr('.', '/'), artifact_id, version, filename)
       end
     end
   end
