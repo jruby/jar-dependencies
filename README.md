@@ -134,6 +134,13 @@ And look at the dependencies tree
 lock_jars --tree
 ```
 
+Classpaths built from `Jars.lock` use Maven's `artifact-version-classifier.jar` filename for classified artifacts. 
+To keep the previous `artifact-classifier-version.jar` output, pass `legacy_classifier: true`:
+
+```ruby
+Jars::Classpath.new.classpath(legacy_classifier: true)
+```
+
 As `lock_jars` uses ruby-maven to resolve the jar dependencies.
 Since jar-dependencies does not declare ruby-maven as runtime dependency
 (you just not need ruby-maven during runtime only when you want to
