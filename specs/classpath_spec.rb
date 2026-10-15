@@ -3,6 +3,7 @@
 require File.expand_path('setup', File.dirname(__FILE__))
 
 require 'yaml'
+require 'tmpdir'
 
 module Helper
   def self.prepare!(array)
@@ -205,6 +206,20 @@ describe Jars::Classpath do
     _(Helper.prepare(subject.classpath(:test))).must_equal Helper.prepare(lock_expected_test)
 
     _(Helper.prepare(subject.classpath(:runtime))).must_equal Helper.prepare(lock_expected_runtime)
+  end
+
+  it 'processes classloader Jars.lock URLs with spaces in the path' do
+    Dir.mktmpdir do |root|
+      dir = File.join(root, 'jar dependencies')
+      Dir.mkdir(dir)
+      lock = File.join(dir, 'Jars.lock')
+      File.write(lock, "org.slf4j:slf4j-simple:1.6.6:compile:\n")
+      url = "uri:file:#{URI::DEFAULT_PARSER.escape(lock)}"
+
+      _(Jars::Classpath.new(nil, url).classpath).must_equal [
+        File.join(Jars.home, 'org/slf4j/slf4j-simple/1.6.6/slf4j-simple-1.6.6.jar')
+      ]
+    end
   end
 
   it 'processes Jars.lock and block loading of jars' do
