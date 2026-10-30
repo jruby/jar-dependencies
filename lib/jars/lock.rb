@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'jars/maven_exec'
+require 'uri'
 
 module Jars
   class JarDetails < Array
@@ -49,7 +50,8 @@ module Jars
 
   class Lock
     def initialize(file)
-      @file = file
+      # JRuby treats percent escapes literally in uri:file paths
+      @file = file.start_with?('uri:file:') ? URI::DEFAULT_PARSER.unescape(file) : file
     end
 
     def process(scope)
