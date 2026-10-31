@@ -134,11 +134,38 @@ And look at the dependencies tree
 lock_jars --tree
 ```
 
-As `lock_jars` uses ruby-maven to resolve the jar dependencies.
-Since jar-dependencies does not declare ruby-maven as runtime dependency
-(you just not need ruby-maven during runtime only when you want to
-setup the project it is needed) it is advicable to have it as
-development dependency in your Gemfile.
+`lock_jars` resolves the jars with the Maven resolver bundled inside
+jar-dependencies (Mima), so you no longer need Maven or the ruby-maven gem
+installed to run it.
+
+# Jarfile
+
+If your project is not a gem, or you would rather keep jar versions out of the
+gemspec, list them in a `Jarfile`. The `lock_jars` will read these together with 
+your gemspec and bundled gems and resolves everything in one go into `Jars.lock`.
+
+A `Jarfile` is plain Ruby and reads similar to a *Gemfile*:
+
+```ruby
+jar 'org.yaml:snakeyaml', '2.7'
+pom 'org.springframework.boot:spring-boot-dependencies', '3.2.5'
+
+# using artifacts that aren't on maven central
+repository 'my-nexus', 'https://nexus.example.com/repo'
+
+# drop a transitive dependency you do not want
+jar 'io.dropwizard:dropwizard-logging', '5.0.2', exclusions: ['jakarta.validation:jakarta.validation-api']
+
+# keep some jars out of the runtime
+scope :test do
+  jar 'org.junit.jupiter:junit-jupiter', '5.11.0'
+end
+```
+
+Both coordinate styles work, `'group:artifact', 'version'` or the packed
+`'group:artifact:version'`, and you can pass a `:classifier`, a `:scope`, or a
+block with nested `exclusion`s. Use `snapshot_repository` for a snapshot repo
+and `local 'path/to/some.jar'` to point at a jar that already sits on disk.
 
 # Proxy and mirror setup
 
