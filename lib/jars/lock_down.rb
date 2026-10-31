@@ -32,9 +32,35 @@ module Jars
         end
       end
 
+      # Also collect from a Jarfile if present
+      jarfile = File.expand_path(Jars.jarfile)
+      if File.exist?(jarfile)
+        read_jarfile_artifacts(jarfile).each do |a|
+          unless done.include?(a.key)
+            artifacts << a
+            done << a.key
+          end
+        end
+      end
+
       artifacts
     end
     private :collect_artifacts
+
+    # minimal Jarfile reader: picks up `jar`/`pom` coordinate lines only
+    # NOTE: the full maven-tools DSL (repository/source/local, ...) is not evaluated
+    def read_jarfile_artifacts(jarfile)
+      artifacts = []
+      File.foreach(jarfile) do |line|
+        line = line.sub(/\s+#.*$/, '').strip # drop inline comments
+        next unless line.start_with?('jar ', 'pom ')
+
+        artifact = GemspecArtifacts::Artifact.parse(line)
+        artifacts << artifact if artifact
+      end
+      artifacts
+    end
+    private :read_jarfile_artifacts
 
     def attach_jar_coordinates_from_bundler_dependencies(artifacts, done)
       load_path = $LOAD_PATH.dup
