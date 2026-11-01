@@ -56,7 +56,7 @@ module Jars
   autoload :Mima, 'jars/mima'
 
   @jars = {}
-  @jars_lock = false
+  @jars_lock = nil
   @jars_locked = nil
 
   class JarLoadError < LoadError; end
@@ -177,13 +177,13 @@ module Jars
 
     def reset
       instance_variables.each do |var|
-        next if var == :@jars_lock
+        next if var == :@jars
 
         instance_variable_set(var, nil)
       end
+      @jars.clear
+
       Jars::MavenSettings.reset
-      @jars = {}
-      @jars_locked = nil
     end
 
     def maven_local_settings
@@ -263,11 +263,15 @@ module Jars
       end
     end
 
+    # Requires *Jars.lock* (once).
+    # @return whether a lock was actually required by this call
     def require_jars_lock
-      return if @jars_lock
+      return false unless @jars_lock.nil?
 
-      require_jars_lock!
-      @jars_lock ||= true # rubocop:disable Naming/MemoizedInstanceVariableName
+      require_jars_lock! # sets @jars_lock to the loaded lock (truthy) when there is one
+      required = !@jars_lock.nil?
+      @jars_lock = false # do not require again
+      required
     end
 
     def mark_as_required(group_id, artifact_id, *classifier_version)
