@@ -46,12 +46,16 @@ module Jars
       file_path = File.expand_path(Jars.jarfile, basedir)
       return unless File.exist?(file_path)
 
+      Jars.debug { "Jarfile loading from #{file_path}" }
       jarfile = Jars::Jarfile.load(file_path)
       @repositories.concat(jarfile.repositories)
       @local_jars.concat(jarfile.local_jars)
 
-      # Jarfile entry overrides the same coordinate from a gemspec
-      jarfile.artifacts.each { |a| collected[a.key] = a }
+      jarfile.artifacts.each do |a|
+        previous = collected[a.key]
+        Jars.info { "Jarfile overrides #{previous.to_gacv} with #{a.to_gacv}" } if previous
+        collected[a.key] = a # Jarfile entry overrides the same coordinate from a gemspec
+      end
     end
 
     def attach_jar_coordinates_from_bundler_dependencies(collected)
