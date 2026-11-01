@@ -20,7 +20,9 @@ module Jars
       specs = Dir.children(basedir).sort.select { |f| f.end_with?('.gemspec') }
       if specs.size == 1
         spec_file = File.join(basedir, specs.first)
-        spec = eval(File.read(spec_file), TOPLEVEL_BINDING, spec_file) # rubocop:disable Security/Eval
+        spec = Gem::Specification.load(spec_file)
+        raise "failed to load gemspec #{spec_file}" unless spec
+
         ga = GemspecArtifacts.new(spec)
         ga.artifacts.each do |a|
           unless done.include?(a.key)
