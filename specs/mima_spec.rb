@@ -3,6 +3,7 @@
 require File.expand_path('setup', File.dirname(__FILE__))
 
 require 'jars/mima'
+require 'jars/jarfile'
 require 'stringio'
 
 describe Jars::Mima do
@@ -38,5 +39,24 @@ describe Jars::Mima do
     _($stderr.string).must_include '[mima] resolving artifact org.example:example:jar:1.0'
   ensure
     $stderr = STDERR
+  end
+
+  it 'builds aether remote repositories from Jarfile repository declarations' do
+    repos = [
+      Jars::Jarfile::Repository.new('acme', 'https://acme.example/repo', false),
+      Jars::Jarfile::Repository.new('acme-snap', 'https://acme.example/snapshots', true)
+    ]
+    remotes = Jars::Mima.remote_repositories(repos)
+
+    _(remotes.map(&:getId)).must_equal %w[acme acme-snap]
+    _(remotes.map(&:getUrl)).must_equal ['https://acme.example/repo', 'https://acme.example/snapshots']
+
+    release = remotes[0]
+    _(release.getPolicy(false).isEnabled).must_equal true  # releases enabled
+    _(release.getPolicy(true).isEnabled).must_equal false  # snapshots disabled
+
+    snapshot = remotes[1]
+    _(snapshot.getPolicy(true).isEnabled).must_equal true   # snapshots enabled
+    _(snapshot.getPolicy(false).isEnabled).must_equal false # releases disabled
   end
 end

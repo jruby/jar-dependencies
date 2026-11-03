@@ -34,7 +34,7 @@ module Jars
       # (local repo, user/global settings.xml).
       #
       # @return [Java::eu.maveniverse.maven.mima.context.ContextOverrides]
-      def context_overrides
+      def context_overrides(repositories: [])
         ensure_jars_loaded
 
         builder = Java::eu.maveniverse.maven.mima.context.ContextOverrides.create
@@ -52,9 +52,32 @@ module Jars
         global = ::Jars::MavenSettings.global_settings
         builder.withGlobalSettingsXmlOverride(java.nio.file.Paths.get(global)) if global
 
+        # extra repositories (e.g. declared in a Jarfile), appended to Central + settings mirrors
+        unless repositories.empty?
+          add_op = Java::eu.maveniverse.maven.mima.context.ContextOverrides::AddRepositoriesOp::APPEND
+          builder.repositories(remote_repositories(repositories))
+          builder.addRepositoriesOp(add_op)
+        end
+
         builder.repositoryListener(aether_repository_listener)
         builder.transferListener(aether_transfer_listener)
         builder.build
+      end
+
+      # Converts repository declarations (responding to +name+, +url+, +snapshot+) to Aether
+      # +RemoteRepository+ objects. A snapshot repository enables snapshots and disables releases;
+      # a regular one does the opposite.
+      def remote_repositories(repositories)
+        ensure_jars_loaded
+
+        enabled = repository_policy(true)
+        disabled = repository_policy(false)
+        repositories.map do |repo|
+          builder = org.eclipse.aether.repository.RemoteRepository::Builder.new(repo.name, 'default', repo.url)
+          builder.setReleasePolicy(repo.snapshot ? disabled : enabled)
+          builder.setSnapshotPolicy(repo.snapshot ? enabled : disabled)
+          builder.build
+        end
       end
 
       # Creates a Mima Context. Caller is responsible for closing it.
@@ -62,10 +85,10 @@ module Jars
       # @param overrides [Java::eu.maveniverse.maven.mima.context.ContextOverrides, nil]
       #   optional overrides; when +nil+, {#context_overrides} is used
       # @return [Java::eu.maveniverse.maven.mima.context.Context]
-      def create_context(overrides = nil)
+      def create_context(overrides = nil, repositories: [])
         ensure_jars_loaded
 
-        overrides ||= context_overrides
+        overrides ||= context_overrides(repositories: repositories)
         runtime = Java::eu.maveniverse.maven.mima.context.Runtimes::INSTANCE.getRuntime
         runtime.create(overrides)
       end
@@ -109,6 +132,12 @@ module Jars
       end
 
       private
+
+      def repository_policy(enabled)
+        update = org.eclipse.aether.repository.RepositoryPolicy::UPDATE_POLICY_DAILY
+        checksum = org.eclipse.aether.repository.RepositoryPolicy::CHECKSUM_POLICY_WARN
+        org.eclipse.aether.repository.RepositoryPolicy.new(enabled, update, checksum)
+      end
 
       def configure_logging
         return unless Object.const_defined?(:ENV_JAVA)

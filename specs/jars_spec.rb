@@ -365,6 +365,31 @@ describe Jars do
     _(Jars.lock).must_equal 'Jars_no_jline.lock'
   end
 
+  it 'require_jars_lock reports false when there is no lock to require' do
+    ENV['JARS_LOCK'] = File.join(Dir.pwd, "no-such-#{rand(1_000_000)}.lock")
+    Jars.reset
+
+    _(Jars.require_jars_lock).must_equal false
+    _(Jars.require_jars_lock).must_equal false
+  ensure
+    ENV['JARS_LOCK'] = nil
+  end
+
+  it 'require_jars_lock reports true the once it requires the lock' do
+    lock_file = File.join(Dir.pwd, "require-lock-#{rand(1_000_000)}.lock")
+    File.write(lock_file, "org.slf4j:slf4j-simple:1.6.6:compile:\n")
+    ENV['JARS_HOME'] = File.join('specs', 'repo')
+    ENV['JARS_LOCK'] = lock_file
+    Jars.reset
+
+    _(Jars.require_jars_lock).must_equal true  # required now
+    _(Jars.require_jars_lock).must_equal false # already required
+  ensure
+    FileUtils.rm_rf(lock_file) if lock_file
+    ENV['JARS_HOME'] = nil
+    ENV['JARS_LOCK'] = nil
+  end
+
   it 'only suppresses version conflict warnings for jars in the lockfile' do
     lock_file = File.join(Dir.pwd, 'Jars_test_46.lock')
     File.write(lock_file, "org.slf4j:slf4j-simple:1.6.6:compile:\n")
