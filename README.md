@@ -134,9 +134,16 @@ And look at the dependencies tree
 lock_jars --tree
 ```
 
-`lock_jars` resolves the jars with the Maven resolver bundled inside
-jar-dependencies (Mima), so you no longer need Maven or the ruby-maven gem
-installed to run it.
+`lock_jars` resolves the jars with the Maven resolver bundled inside jar-dependencies 
+(Mima), so you no longer need Maven or the ruby-maven gem installed to run it.
+
+Classpaths built from `Jars.lock` use Maven's `artifact-version-classifier.jar` naming 
+for classified artifacts, to keep the previous `artifact-classifier-version.jar` output, 
+pass `legacy_classifier: true`:
+
+```ruby
+Jars::Classpath.new.classpath(legacy_classifier: true)
+```
 
 # Jarfile
 
