@@ -17,9 +17,12 @@ module Jars
       attach_jar_coordinates_from_bundler_dependencies(artifacts, done)
 
       # Also collect from local gemspec if present
-      specs = Dir['*.gemspec']
+      specs = Dir.children(basedir).sort.select { |f| f.end_with?('.gemspec') }
       if specs.size == 1
-        spec = eval(File.read(specs.first), TOPLEVEL_BINDING, specs.first) # rubocop:disable Security/Eval
+        spec_file = File.join(basedir, specs.first)
+        spec = Gem::Specification.load(spec_file)
+        raise "failed to load gemspec #{spec_file}" unless spec
+
         ga = GemspecArtifacts.new(spec)
         ga.artifacts.each do |a|
           unless done.include?(a.key)

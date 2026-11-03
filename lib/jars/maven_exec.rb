@@ -34,9 +34,9 @@ module Jars
       when String
         @specfile = File.expand_path(spec)
         @basedir = File.dirname(@specfile)
-        Dir.chdir(@basedir) do
-          spec = eval(File.read(@specfile), TOPLEVEL_BINDING, @specfile) # rubocop:disable Security/Eval
-        end
+        # chdir so gemspecs that read relative files still resolve
+        spec = Dir.chdir(@basedir) { Gem::Specification.load(@specfile) }
+        raise "failed to load gemspec #{@specfile}" unless spec
       when Gem::Specification
         if File.exist?(spec.loaded_from)
           @basedir = spec.gem_dir
