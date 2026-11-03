@@ -50,12 +50,22 @@ describe Jars do
 
         _(Jars.to_boolean('JARS_DEBUG')).must_equal true
         _(Jars.to_boolean('jars.quiet')).must_equal false
+
+        java.lang.System.set_property('jars.legacy.classifier', 'true')
+        _(Jars.legacy_classifier?).must_equal true
       ensure
         java.lang.System.clear_property('jars.skip')
         java.lang.System.clear_property('jars.quiet')
         java.lang.System.clear_property('jars.debug')
+        java.lang.System.clear_property('jars.legacy.classifier')
       end
     end
+
+    assert_nil Jars.legacy_classifier?
+    ENV['JARS_LEGACY_CLASSIFIER'] = 'true'
+    _(Jars.legacy_classifier?).must_equal true
+    ENV['JARS_LEGACY_CLASSIFIER'] = 'false'
+    _(Jars.legacy_classifier?).must_equal false
   end
 
   it 'treats debug as verbose' do

@@ -138,11 +138,11 @@ lock_jars --tree
 (Mima), so you no longer need Maven or the ruby-maven gem installed to run it.
 
 Classpaths built from `Jars.lock` use Maven's `artifact-version-classifier.jar` naming 
-for classified artifacts, to keep the previous `artifact-classifier-version.jar` output, 
-pass `legacy_classifier: true`:
+for artifacts. To keep the previous `artifact-classifier-version.jar` output, set the 
+`JARS_LEGACY_CLASSIFIER=true` environment variable or pass `legacy_classifier: true`:
 
 ```ruby
-Jars::Classpath.new.classpath(legacy_classifier: true)
+Jars::Classpath.classpath(legacy_classifier: true)
 ```
 
 # Jarfile
@@ -240,6 +240,9 @@ JARS_DEBUG=true gem install some_gem
 </tr>
 <tr>
 <td><tt>JARS_SKIP</tt></td><td>jars.skip</td><td>true</td><td>do **NOT** install jar dependencies at all</td>
+</tr>
+<tr>
+<td><tt>JARS_LEGACY_CLASSIFIER</tt></td><td>jars.legacy.classifier</td><td>false</td><td>if set to true classpath will use artifact-classifier-version.jar instead of artifact-version-classifier.jar</td>
 </tr>
 </table>
 

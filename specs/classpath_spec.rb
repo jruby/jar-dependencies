@@ -249,6 +249,17 @@ describe Jars::Classpath do
         File.binwrite(lock, "org.xmlresolver:xmlresolver:data:5.3.3:compile:#{explicit_path}\n")
         _(classpath.classpath).must_equal [explicit_path]
         _(classpath.classpath(legacy_classifier: true)).must_equal [explicit_path]
+
+        File.write(lock, "org.xmlresolver:xmlresolver:data:5.3.3:compile:\n")
+        begin
+          ENV['JARS_LEGACY_CLASSIFIER'] = 'true'
+          _(classpath.classpath).must_equal [legacy_path]
+          _(classpath.classpath_string).must_equal legacy_path
+          _(classpath.classpath(legacy_classifier: false)).must_equal [maven_path]
+          _(classpath.classpath_string(legacy_classifier: false)).must_equal maven_path
+        ensure
+          ENV.delete('JARS_LEGACY_CLASSIFIER')
+        end
       end
     end
   end

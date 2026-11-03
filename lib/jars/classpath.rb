@@ -12,13 +12,13 @@ module Jars
     end
 
     # convenient method
-    def self.classpath(scope = nil)
-      new.classpath(scope)
+    def self.classpath(scope = nil, legacy_classifier: nil)
+      new.classpath(scope, legacy_classifier: legacy_classifier)
     end
 
     # convenient method
-    def self.classpath_string(scope = nil)
-      new.classpath_string(scope)
+    def self.classpath_string(scope = nil, legacy_classifier: nil)
+      new.classpath_string(scope, legacy_classifier: legacy_classifier)
     end
 
     def initialize(spec = nil, deps = nil)
@@ -68,7 +68,8 @@ module Jars
       end
     end
 
-    def classpath(scope = nil, legacy_classifier: false)
+    def classpath(scope = nil, legacy_classifier: nil)
+      legacy_classifier = Jars.legacy_classifier? if legacy_classifier.nil?
       classpath = []
       process(scope) do |jar|
         classpath << jar.file(legacy_classifier: legacy_classifier)
@@ -85,7 +86,7 @@ module Jars
     end
     private :process
 
-    def classpath_string(scope = nil, legacy_classifier: false)
+    def classpath_string(scope = nil, legacy_classifier: nil)
       classpath(scope, legacy_classifier: legacy_classifier).join(File::PATH_SEPARATOR)
     end
   end
