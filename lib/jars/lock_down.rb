@@ -20,12 +20,11 @@ module Jars
 
     private
 
-    # # @return [Array[Jars::GemspecArtifacts::Artifact]]]
+    # @return [Array[Jars::GemspecArtifacts::Artifact]]
     def collect_artifacts
-      artifacts = []
-      done = []
+      collected = {} # artifact.key => artifact
 
-      attach_jar_coordinates_from_bundler_dependencies(artifacts, done)
+      attach_jar_coordinates_from_bundler_dependencies(collected)
 
       # Also collect from local gemspec if present
       specs = Dir.children(basedir).sort.select { |f| f.end_with?('.gemspec') }
@@ -34,21 +33,16 @@ module Jars
         spec = Gem::Specification.load(spec_file)
         raise "failed to load gemspec #{spec_file}" unless spec
 
-        GemspecArtifacts.new(spec).artifacts.each do |artifact|
-          unless done.include?(artifact.key)
-            artifacts << artifact
-            done << artifact.key
-          end
-        end
+        GemspecArtifacts.new(spec).artifacts.each { |a| collected[a.key] ||= a }
       end
 
-      append_artifacts_from_jarfile_if_any(artifacts, done)
+      append_artifacts_from_jarfile_if_any(collected)
 
-      artifacts
+      collected.values
     end
 
     # jar/pom coordinates, repositories and local jars from a Jarfile (if any)
-    def append_artifacts_from_jarfile_if_any(artifacts, done)
+    def append_artifacts_from_jarfile_if_any(collected)
       file_path = File.expand_path(Jars.jarfile, basedir)
       return unless File.exist?(file_path)
 
@@ -56,15 +50,11 @@ module Jars
       @repositories.concat(jarfile.repositories)
       @local_jars.concat(jarfile.local_jars)
 
-      jarfile.artifacts.each do |artifact|
-        unless done.include?(artifact.key)
-          artifacts << artifact
-          done << artifact.key
-        end
-      end
+      # Jarfile entry overrides the same coordinate from a gemspec
+      jarfile.artifacts.each { |a| collected[a.key] = a }
     end
 
-    def attach_jar_coordinates_from_bundler_dependencies(artifacts, done)
+    def attach_jar_coordinates_from_bundler_dependencies(collected)
       load_path = $LOAD_PATH.dup
       require 'bundler'
       # TODO: make this group a commandline option
@@ -72,13 +62,11 @@ module Jars
       cwd = File.expand_path('.')
       Gem.loaded_specs.each_value do |spec|
         all = cwd == spec.full_gem_path # if gemspec is local then include all dependencies
-        ga = GemspecArtifacts.new(spec)
-        ga.artifacts.each do |a|
-          next if done.include?(a.key)
+        GemspecArtifacts.new(spec).artifacts.each do |a|
+          next if collected.key?(a.key)
           next unless all || (a.scope != 'provided' && a.scope != 'test')
 
-          artifacts << a
-          done << a.key
+          collected[a.key] = a
         end
       end
     rescue LoadError => e
