@@ -4,11 +4,6 @@ require 'jars/gemspec_artifacts'
 
 module Jars
   # Self-contained reader for the (j)bundler Jarfile DSL.
-  #
-  # Evaluates a Jarfile against a collector instance - no Maven process and no
-  # maven-tools dependency (both gone since the move to Mima). Produces
-  # GemspecArtifacts::Artifact objects plus repository declarations the resolver
-  # can consume.
   class Jarfile
     def self.load(file)
       new.tap { |jarfile| jarfile.eval_file(file) }
@@ -75,9 +70,16 @@ module Jars
       @local_jars << LocalJar.new('ruby.maven-tools.jar', name, version, abs)
     end
 
-    # deprecated in maven-tools, kept as a no-op so existing Jarfiles still load
+    # @deprecated in maven-tools, kept as a no-op so existing Jarfiles still load
     def jruby(*)
       nil
+    end
+
+    # Normalizes a DSL exclusion list ('group:artifact' or ['group', 'artifact']) to coordinate strings
+    def self.normalize_exclusions(list)
+      return [] if list.nil?
+
+      list.map { |e| e.is_a?(Array) ? e.join(':') : e.to_s }
     end
 
     private
@@ -92,8 +94,9 @@ module Jars
       classifier ||= config.classifier
       scope = (config.scope || @scope)&.to_s
       exclusions = build_exclusions(config.exclusions)
-      @artifacts << GemspecArtifacts::Artifact.new(type.to_s, group_id, artifact_id, classifier, version,
-                                                   exclusions, scope: scope)
+      @artifacts << GemspecArtifacts::Artifact.new(
+        type.to_s, group_id, artifact_id, classifier, version, exclusions, scope: scope
+      )
     end
 
     # Normalizes the positional coordinate forms into [group, artifact, classifier, version].
@@ -125,13 +128,6 @@ module Jars
       return nil if coords.nil? || coords.empty?
 
       GemspecArtifacts::Exclusions.new("[#{coords.join(', ')}]")
-    end
-
-    # Normalizes a DSL exclusion list ('group:artifact' or ['group', 'artifact']) to coordinate strings
-    def self.normalize_exclusions(list)
-      return [] if list.nil?
-
-      list.map { |e| e.is_a?(Array) ? e.join(':') : e.to_s }
     end
 
     # Collects scope / classifier / exclusions declared in a jar/pom block, seeded by inline options.

@@ -3,13 +3,24 @@
 require 'jar_dependencies'
 require 'jars/version'
 require 'jars/gemspec_artifacts'
+require 'jars/jarfile'
 
 module Jars
   class LockDown
+    attr_reader :repositories, :local_jars
+
+    def initialize
+      @repositories = []
+      @local_jars = []
+    end
+
     def basedir
       File.expand_path('.')
     end
 
+    private
+
+    # # @return [Array[Jars::GemspecArtifacts::Artifact]]]
     def collect_artifacts
       artifacts = []
       done = []
@@ -23,44 +34,35 @@ module Jars
         spec = Gem::Specification.load(spec_file)
         raise "failed to load gemspec #{spec_file}" unless spec
 
-        ga = GemspecArtifacts.new(spec)
-        ga.artifacts.each do |a|
-          unless done.include?(a.key)
-            artifacts << a
-            done << a.key
+        GemspecArtifacts.new(spec).artifacts.each do |artifact|
+          unless done.include?(artifact.key)
+            artifacts << artifact
+            done << artifact.key
           end
         end
       end
 
-      # Also collect from a Jarfile if present
-      jarfile = File.expand_path(Jars.jarfile)
-      if File.exist?(jarfile)
-        read_jarfile_artifacts(jarfile).each do |a|
-          unless done.include?(a.key)
-            artifacts << a
-            done << a.key
-          end
+      append_artifacts_from_jarfile_if_any(artifacts, done)
+
+      artifacts
+    end
+
+    # jar/pom coordinates, repositories and local jars from a Jarfile (if any)
+    def append_artifacts_from_jarfile_if_any(artifacts, done)
+      file_path = File.expand_path(Jars.jarfile, basedir)
+      return unless File.exist?(file_path)
+
+      jarfile = Jars::Jarfile.load(file_path)
+      @repositories.concat(jarfile.repositories)
+      @local_jars.concat(jarfile.local_jars)
+
+      jarfile.artifacts.each do |artifact|
+        unless done.include?(artifact.key)
+          artifacts << artifact
+          done << artifact.key
         end
       end
-
-      artifacts
     end
-    private :collect_artifacts
-
-    # minimal Jarfile reader: picks up `jar`/`pom` coordinate lines only
-    # NOTE: the full maven-tools DSL (repository/source/local, ...) is not evaluated
-    def read_jarfile_artifacts(jarfile)
-      artifacts = []
-      File.foreach(jarfile) do |line|
-        line = line.sub(/\s+#.*$/, '').strip # drop inline comments
-        next unless line.start_with?('jar ', 'pom ')
-
-        artifact = GemspecArtifacts::Artifact.parse(line)
-        artifacts << artifact if artifact
-      end
-      artifacts
-    end
-    private :read_jarfile_artifacts
 
     def attach_jar_coordinates_from_bundler_dependencies(artifacts, done)
       load_path = $LOAD_PATH.dup
@@ -90,6 +92,8 @@ module Jars
       $LOAD_PATH.replace(load_path)
     end
 
+    public
+
     def lock_down(vendor_dir = nil, force: false, update: false, tree: nil) # rubocop:disable Lint/UnusedMethodArgument
       lock_file = File.expand_path(Jars.lock)
 
@@ -100,7 +104,7 @@ module Jars
 
       artifacts = collect_artifacts
 
-      if artifacts.empty?
+      if artifacts.empty? && @local_jars.empty?
         puts 'no jar dependencies found'
         return
       end
@@ -113,11 +117,14 @@ module Jars
         puts "          exclusions: #{a.exclusions}" if a.exclusions && !a.exclusions.empty?
       end
 
-      context = Jars::Mima.create_context
-      begin
-        resolved = Jars::Mima.resolve_with_context(context, artifacts, all_dependencies: true)
-      ensure
-        context.close
+      resolved = []
+      unless artifacts.empty?
+        context = Jars::Mima.create_context(repositories: @repositories)
+        begin
+          resolved = Jars::Mima.resolve_with_context(context, artifacts, all_dependencies: true)
+        ensure
+          context.close
+        end
       end
 
       # Write Jars.lock
@@ -127,6 +134,7 @@ module Jars
 
           f.puts dep.to_lock_entry
         end
+        @local_jars.each { |local| f.puts local.to_lock_entry }
       end
 
       # Optionally vendor jars

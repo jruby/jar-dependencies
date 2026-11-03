@@ -183,6 +183,7 @@ module Jars
       end
     end
 
+    # @return [Array[Artifact]]
     attr_reader :artifacts
 
     def initialize(spec)
