@@ -43,7 +43,12 @@ module Jars
           ENV_JAVA[a[2..-2]] || a
         end
       else
-        File.join(Jars.home, group_id.gsub(/[.]/, '/'), artifact_id, version, "#{gacv[1..].join('-')}.jar")
+        filename = if classifier
+                     "#{artifact_id}-#{version}-#{classifier}.jar"
+                   else
+                     "#{artifact_id}-#{version}.jar"
+                   end
+        File.join(Jars.home, group_id.tr('.', '/'), artifact_id, version, filename)
       end
     end
   end
