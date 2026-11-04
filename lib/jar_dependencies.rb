@@ -49,8 +49,6 @@ module Jars
   VENDOR = 'JARS_VENDOR'.freeze
   # string used when the version is unknown
   UNKNOWN = 'unknown'.freeze
-  # use legacy filename classifier (artifact-classifier-version.jar)
-  LEGACY_CLASSIFIER = 'JARS_LEGACY_CLASSIFIER'.freeze
   # rubocop:enable Style/RedundantFreeze
 
   autoload :Classpath, 'jars/classpath'
@@ -146,10 +144,6 @@ module Jars
 
     def vendor?
       to_boolean(VENDOR)
-    end
-
-    def legacy_classifier?
-      to_boolean(LEGACY_CLASSIFIER)
     end
 
     def freeze_loading

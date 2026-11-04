@@ -9,9 +9,9 @@ module Jars
       self[-2].to_sym
     end
 
-    def file(legacy_classifier: false)
+    def file
       file = self[-1].strip
-      file.empty? ? path(legacy_classifier: legacy_classifier) : file
+      file.empty? ? path : file
     end
 
     def group_id
@@ -36,17 +36,17 @@ module Jars
       classifier ? self[0..3] : self[0..2]
     end
 
-    def path(legacy_classifier: false)
+    def path
       if scope == :system
         # replace maven like system properties embedded into the string
         self[-1].gsub(/\$\{[a-zA-Z.]+\}/) do |a|
           ENV_JAVA[a[2..-2]] || a
         end
       else
-        filename = if classifier && !legacy_classifier
+        filename = if classifier
                      "#{artifact_id}-#{version}-#{classifier}.jar"
                    else
-                     "#{gacv[1..].join('-')}.jar"
+                     "#{artifact_id}-#{version}.jar"
                    end
         File.join(Jars.home, group_id.tr('.', '/'), artifact_id, version, filename)
       end

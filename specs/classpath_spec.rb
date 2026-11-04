@@ -231,35 +231,21 @@ describe Jars::Classpath do
     _($CLASSPATH.detect { |c| c.include?('example') }).must_be_nil
   end
 
-  it 'uses Maven classifier paths by default and permits legacy order' do
+  it 'uses Maven classifier paths' do
     Dir.mktmpdir do |home|
       lock = File.join(home, 'Jars.lock')
       File.write(lock, "org.xmlresolver:xmlresolver:data:5.3.3:compile:\n")
       dir = File.join(home, 'org/xmlresolver/xmlresolver/5.3.3')
       maven_path = File.join(dir, 'xmlresolver-5.3.3-data.jar')
-      legacy_path = File.join(dir, 'xmlresolver-data-5.3.3.jar')
 
       Jars.stub(:home, home) do
         classpath = Jars::Classpath.new(nil, lock)
         _(classpath.classpath).must_equal [maven_path]
-        _(classpath.classpath(legacy_classifier: true)).must_equal [legacy_path]
         _(classpath.classpath_string).must_equal maven_path
 
         explicit_path = File.join(home, 'explicit.jar')
         File.binwrite(lock, "org.xmlresolver:xmlresolver:data:5.3.3:compile:#{explicit_path}\n")
         _(classpath.classpath).must_equal [explicit_path]
-        _(classpath.classpath(legacy_classifier: true)).must_equal [explicit_path]
-
-        File.write(lock, "org.xmlresolver:xmlresolver:data:5.3.3:compile:\n")
-        begin
-          ENV['JARS_LEGACY_CLASSIFIER'] = 'true'
-          _(classpath.classpath).must_equal [legacy_path]
-          _(classpath.classpath_string).must_equal legacy_path
-          _(classpath.classpath(legacy_classifier: false)).must_equal [maven_path]
-          _(classpath.classpath_string(legacy_classifier: false)).must_equal maven_path
-        ensure
-          ENV.delete('JARS_LEGACY_CLASSIFIER')
-        end
       end
     end
   end
